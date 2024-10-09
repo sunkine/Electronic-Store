@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "startdev": "nodemon --inspect index.js"
+    "startdev": "nodemon --inspect index.js",
+    "start": "node index.js"
   },
   "author": "",
   "license": "ISC",
