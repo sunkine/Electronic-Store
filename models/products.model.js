@@ -12,6 +12,7 @@ const productsModel = new mongodb.Schema({
     },
     Quantity: {
         type: Number,
+        default: 1,
     },
     Price: {
         type: Number,
@@ -26,7 +27,8 @@ const productsModel = new mongodb.Schema({
         required: true,
     },
     Status: {
-        type: Boolean,
+        type: String,
+        emum: ["Available", "Not availale"],
     },
 })
 
