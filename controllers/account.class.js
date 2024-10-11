@@ -44,7 +44,7 @@ export const deleteAccount = async (req, res) => {
 export const updateAccount = async (req, res) => {
   try {
     const id = req.params.id;
-    const idAcc = await Tour.findByIdAndUpdate(
+    const idAcc = await Account.findByIdAndUpdate(
       id,
       {
         $set: req.body,

@@ -10,8 +10,8 @@ router.post('/sign-up', SignUp)
 router.get('/', getAllAccount)
 router.get('/:id', getAccount)
 //delete account
-router.delete('/delete/:id', deleteAccount)
+router.delete('/delete-account/:id', deleteAccount)
 //update account
-router.put('/update/:id', updateAccount)
+router.put('/update-account/:id', updateAccount)
 
 export default router;

@@ -11,9 +11,9 @@ router.get('/:id', getOneUser)
 //create a user
 router.post('/create-user', createUser)
 //update a user
-router.put('/:id', updateUser)
+router.put('/update-user/:id', updateUser)
 //delete a user
-router.delete('/:id', deleteUser)
+router.delete('/delete-user/:id', deleteUser)
 //forgot password
 router.post('/forgot-password', isLoggedin, forgotPasswordCtrl)
 router.get('/reset-password/:token', resetPasswordCtrl);

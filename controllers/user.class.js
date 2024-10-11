@@ -90,7 +90,7 @@ export const getOneUser = async (req, res) => {
     if (!user) {
       return res
         .status(404)
-        .json({ success: false, message: "Customer not found." });
+        .json({ success: false, message: "User not found." });
     } else {
       res.status(200).json({
         success: true,
