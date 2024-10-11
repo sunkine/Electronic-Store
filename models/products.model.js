@@ -1,6 +1,6 @@
-import mongodb from "../config/mongoose.js"
+import mongoose from "../config/mongoose.js"
 
-const productsModel = new mongodb.Schema({
+const productsModel = new mongoose.Schema({
     ID_Product: {
         type: String,
         required: true,
@@ -32,5 +32,5 @@ const productsModel = new mongodb.Schema({
     },
 })
 
-const products = mongodb.model('products', productsModel)
+const products = mongoose.model('products', productsModel)
 export default products;

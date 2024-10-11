@@ -3,9 +3,17 @@ import dotenv from "dotenv";
 import cors from "cors";
 import bodyParser from "body-parser";
 import { queryParser } from "express-query-parser";
-import ProductRouter from './routes/products.route.js'
 
-const productroute = '/product'
+import ProductRouter from './routes/products.route.js'
+import AuthRouter from './routes/auth.route.js'
+import AccountRouter from './routes/account.route.js'
+import UserRouter from './routes/user.route.js'
+
+const productRoute = '/product'
+const authRoute = '/auth'
+const accountRoute = '/account'
+const userRoute = '/user'
+
 dotenv.config();
 const app = express();
 
@@ -22,6 +30,9 @@ app.use(
   })
 );
 
-app.use(productroute, ProductRouter)
+app.use(productRoute, ProductRouter)
+app.use(accountRoute, AccountRouter)
+app.use(userRoute, UserRouter)
+app.use(authRoute, AuthRouter)
 
 export default app;
