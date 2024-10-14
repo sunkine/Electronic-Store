@@ -15,7 +15,7 @@ router.put('/update-user/:id', updateUser)
 //delete a user
 router.delete('/delete-user/:id', deleteUser)
 //forgot password
-router.post('/forgot-password', isLoggedin, forgotPasswordCtrl)
+router.post('/forgot-password', forgotPasswordCtrl)
 router.get('/reset-password/:token', resetPasswordCtrl);
 
 export default router;

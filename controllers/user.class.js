@@ -3,7 +3,8 @@ import asyncHandler from "express-async-handler";
 import jwt from "jsonwebtoken";
 import sendEmail from "../utils/sendEmail.js";
 import bcrypt from "bcryptjs";
-import generateToken from "../utils/createToken.js"
+import generateToken from "../utils/createToken.js";
+import Account from "../models/account.model.js";
 
 export const createUser = async (req, res) => {
   const newUser = new User(req.body);
@@ -33,13 +34,11 @@ export const updateUser = async (req, res) => {
         .status(404)
         .json({ success: false, message: "User not found." });
     } else {
-      res
-        .status(200)
-        .json({
-          success: true,
-          messgae: "Successfully updated.",
-          data: idUserUpdated,
-        });
+      res.status(200).json({
+        success: true,
+        messgae: "Successfully updated.",
+        data: idUserUpdated,
+      });
     }
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -107,7 +106,11 @@ export const forgotPasswordCtrl = asyncHandler(async (req, res) => {
   // Check if the user exists
   const user = await User.findOne({ Email: req.body.Email });
   if (!user) {
-    throw new Error("User not found with this email");
+    res.status(401).json({
+      status: "failed",
+      message: "Not found your. Please check your email!.",
+      token: generateToken(user._id), // Log the user in after resetting password
+    });
   }
 
   // Create a JWT token for password reset
@@ -150,25 +153,37 @@ export const resetPasswordCtrl = asyncHandler(async (req, res) => {
     // Find the user by the decoded ID
     const user = await User.findById(decoded.userId);
     if (!user) {
-      throw new Error("User not found");
+      return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    // Set the new password
+    // Find the associated account using the user's email
+    const account = await Account.findOne({ Email: user.Email });
+    if (!account) {
+      return res.status(404).json({ success: false, message: "Account not found" });
+    }
+
+    // Set the new password in the Account model
     const salt = await bcrypt.genSalt(10);
-    user.Password = await bcrypt.hash(req.body.Password, salt);
+    account.Password = await bcrypt.hash(req.body.Password, salt);
 
-    // Save the updated user
-    await user.save();
+    // Save the updated account
+    await account.save();
 
-    // Send response
+    // Send response without returning the password
     res.status(200).json({
       status: "success",
       message: "Password reset successful!",
       token: generateToken(user._id), // Log the user in after resetting password
     });
   } catch (err) {
-    // Handle invalid or expired token
-    // throw new Error("Token is invalid or has expired");
-    res.status(500).json({ success: false, message: err.message });
+    if (err.name === "TokenExpiredError") {
+      return res.status(401).json({ success: false, message: "Token has expired" });
+    } else if (err.name === "JsonWebTokenError") {
+      return res.status(401).json({ success: false, message: "Invalid token" });
+    }
+
+    // Other errors
+    res.status(500).json({ success: false, message: "An error occurred" });
   }
 });
+
