@@ -1,4 +1,5 @@
 import Account from "../models/account.model.js";
+import bcrypt from "bcryptjs"
 
 export const getAllAccount = async (req, res) => {
   const page = parseInt(req.query.page);
@@ -44,10 +45,13 @@ export const deleteAccount = async (req, res) => {
 export const updateAccount = async (req, res) => {
   try {
     const id = req.params.id;
+    const salt = bcrypt.genSaltSync(10);
+    const hash = bcrypt.hashSync(req.body.Password, salt);
     const idAcc = await Account.findByIdAndUpdate(
       id,
       {
         $set: req.body,
+        Password: hash,
       },
       { new: true }
     );
@@ -85,4 +89,3 @@ export const getAccount = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-
