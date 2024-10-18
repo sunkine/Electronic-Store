@@ -3,53 +3,52 @@ import bcrypt from "bcryptjs";
 import generateToken from "../utils/createToken.js";
 
 export const SignIn = async (req, res) => {
-  const email = req.body.Email;
-  const pw = req.body.Password;
-  if (!email || !pw) {
-    return res.status(400).json({
-      success: false,
-      message: "Email, Password are required.",
-    });
-  }
   try {
-    const mail = await Account.findOne({ Email: req.body.Email });
+    const account = await Account.findOne({ Email: req.body.Email });
 
-    if (!mail) {
+    if (!account) {
       return res.status(404).json({
         success: false,
-        message: "Username not found.",
+        message: "Email not found.",
       });
     }
 
-    const checkPassword = bcrypt.compare(pw, mail.Password);
+    const isPasswordValid = await bcrypt.compare(
+      req.body.Password,
+      account.Password
+    );
 
-    if (!checkPassword) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Incorrect email or password." });
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: "Incorrect email or password.",
+      });
     }
 
-    const { Password, Role, ...rest } = mail._doc;
-    if (mail && checkPassword)
-      res.status(200).json({
+    const { Password: pwHash, Role, ...userDetails } = account._doc;
+
+    // Create JWT token
+    const token = generateToken();
+
+    res
+      .cookie("accessToken", token, {
+        httpOnly: true,
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
+      })
+      .status(200)
+      .json({
         success: true,
-        message: "Successfully login",
-        token: generateToken(mail?._id),
-        data: {
-          ...rest,
-        },
+        message: "Successfully logged in.",
+        token: token,
+        data: userDetails,
       });
-    else {
-      throw new Error("Invalid login credentials");
-    }
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: error,
+      message: "error",
     });
   }
 };
-
 
 export const SignUp = async (req, res) => {
   const { Username, Password, Email } = req.body;
