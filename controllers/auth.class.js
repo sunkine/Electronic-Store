@@ -3,52 +3,58 @@ import bcrypt from "bcryptjs";
 import generateToken from "../utils/createToken.js";
 
 export const SignIn = async (req, res) => {
-  const email = req.body.Email;
-  const pw = req.body.Password;
-  if (!email || !pw) {
-    return res.status(400).json({
-      success: false,
-      message: "Email, Password are required.",
-    });
-  }
-  try {
-    const mail = await Account.findOne({ Email: req.body.Email });
+  const { Email, Password } = req.body;
 
-    if (!mail) {
+  try {
+    const acc = await Account.findOne({ Email });
+
+    if (!acc) {
       return res.status(404).json({
         success: false,
-        message: "Email not found.",
+        message: "Username not found.",
       });
     }
 
-    const checkPassword = bcrypt.compare(pw, mail.Password);
+    const isPasswordValid = await bcrypt.compare(Password, acc.Password);
 
-    if (!checkPassword) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Incorrect email or password." });
-    }
-
-    const { Password, Role, ...rest } = mail._doc;
-    if (mail && checkPassword)
-      res.status(200).json({
-        success: true,
-        message: "Successfully login",
-        token: generateToken(mail?._id),
-        data: {
-          ...rest,
-        },
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: "Incorrect email or password.",
       });
-    else {
-      throw new Error("Invalid login credentials");
     }
+
+    const { Password: pwHash, Role, ...userDetails } = acc._doc;
+
+    // Create JWT token
+    const token = jwt.sign(
+      {
+        id: acc._id,
+        role: acc.Role,
+      },
+      process.env.JWT_SECRET_KEY,
+      { expiresIn: "7d" }
+    );
+// them reset token
+    res.cookie("accessToken", token, {
+      httpOnly: true,
+      maxAge: 7 * 24 * 60 * 60 * 1000, 
+    })
+    .status(200)
+    .json({
+      success: true,
+      message: "Successfully logged in.",
+      data: userDetails,
+    });
+
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: error,
+      message: "Failed to login.",
     });
   }
 };
+
 
 export const SignUp = async (req, res) => {
   const { Username, Password, Email } = req.body;

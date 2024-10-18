@@ -3,7 +3,6 @@ import { SignIn} from '../controllers/auth.class.js'
 const router = express.Router()
 
 //user sign in
-router.get('/sign-in', SignIn)
-
+router.get('/', SignIn)
 
 export default router;
