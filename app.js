@@ -19,7 +19,12 @@ const app = express();
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-app.use(cors());
+// Enable CORS
+app.use(cors({
+  origin: 'http://localhost:3001', // Hoặc dùng '*' nếu muốn cho phép mọi nguồn
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'], // Các phương thức được phép
+  credentials: true, // Nếu bạn cần gửi cookie hoặc authentication headers
+}));
 
 app.use(
   queryParser({
