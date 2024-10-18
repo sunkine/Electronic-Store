@@ -28,7 +28,7 @@ export const SignIn = async (req, res) => {
     const { Password: pwHash, Role, ...userDetails } = account._doc;
 
     // Create JWT token
-    const token = generateToken();
+    const token = generateToken(account?.id);
 
     res
       .cookie("accessToken", token, {
