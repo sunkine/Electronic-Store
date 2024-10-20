@@ -1,7 +1,7 @@
 import User from "../models/user.model.js";
 import asyncHandler from "express-async-handler";
 import jwt from "jsonwebtoken";
-import sendEmail from "../utils/sendEmail.js";
+import sendEmail,{sendVerificationEmail } from "../utils/sendEmail.js";
 import bcrypt from "bcryptjs";
 import generateToken from "../utils/createToken.js";
 import Account from "../models/account.model.js";
@@ -184,5 +184,59 @@ export const resetPasswordCtrl = asyncHandler(async (req, res) => {
 
     // Other errors
     res.status(500).json({ success: false, message: "An error occurred" });
+  }
+});
+
+
+export const SignUp = asyncHandler(async (req, res) => {
+  const { Username, Email, Password } = req.body;
+
+  // Make sure both email and password are provided
+  if (!Email || !Password) {
+    return res.status(400).json({ success: false, message: 'Email and password are required.' });
+  }
+
+  try {
+    // Check if the user already exists
+    const existingUser = await Account.findOne({ Email });
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: 'Email is already registered.' });
+    }
+
+    // Create a new account
+    const account = new Account({
+      Username,
+      Email,
+      Password: bcrypt.hashSync(Password, 10), // hash the password
+      Active: false, // set account as not verified
+    });
+
+    // Save the account to the database
+    const savedAccount = await account.save();
+
+    // Check if the account was successfully created
+    if (!savedAccount) {
+      return res.status(500).json({ success: false, message: 'Account creation failed.' });
+    }
+
+    // Generate a verification token
+    const verificationToken = jwt.sign({ userId: savedAccount._id }, process.env.JWT_SECRET, {
+      expiresIn: '1h',
+    });
+
+    // Generate the verification link
+    const verificationLink = `${req.protocol}://${req.get('host')}/auth/verify-email/${verificationToken}`;
+
+    // Send the verification email
+    await sendVerificationEmail(Email, verificationLink);
+
+    res.status(201).json({
+      success: true,
+      message: 'Account registered successfully! Please verify your email to activate your account.',
+    });
+
+  } catch (error) {
+    // Catch and return any errors
+    res.status(500).json({ success: false, message: error.message });
   }
 });

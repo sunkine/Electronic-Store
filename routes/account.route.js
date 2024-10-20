@@ -5,7 +5,7 @@ import { SignUp } from '../controllers/auth.class.js'
 const router = express.Router()
 
 //user sign up
-router.post('/sign-up', SignUp)
+// router.post('/sign-up', SignUp)
 //get all user
 router.get('/', getAllAccount)
 router.get('/:id', getAccount)
