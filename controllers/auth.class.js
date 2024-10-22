@@ -6,7 +6,7 @@ import jwt from "jsonwebtoken"
 
 export const SignIn = async (req, res) => {
   try {
-    const account = await Account.findOne({ Email: req.body.Email });
+    const account = await Account.findOne({ email: req.body.email });
 
     if (!account) {
       return res.status(404).json({
@@ -17,8 +17,8 @@ export const SignIn = async (req, res) => {
 
     
     const isPasswordValid = await bcrypt.compare(
-      req.body.Password,
-      account.Password
+      req.body.password,
+      account.password
     );
     
     if (!isPasswordValid) {
@@ -28,14 +28,14 @@ export const SignIn = async (req, res) => {
       });
     }
     
-    if (!account.Active) {
+    if (!account.isActive) {
       return res.status(401).json({
         success: false,
         message: 'Please verify your email to activate your account.',
       });
     }
 
-    const { Password: pwHash, Role, ...userDetails } = account._doc;
+    const { password: pwHash, Role, ...userDetails } = account._doc;
 
     // Create JWT token
     const token = generateToken(account?.id);
@@ -60,59 +60,6 @@ export const SignIn = async (req, res) => {
   }
 };
 
-export const SignUp = async (req, res) => {
-  const { Username, Password, Email } = req.body;
-  if (!Username || !Password || !Email) {
-    return res.status(400).json({
-      success: false,
-      message: "Username, Password, and Email are required.",
-    });
-  }
-
-  const salt = bcrypt.genSaltSync(10);
-  const hash = bcrypt.hashSync(req.body.Password, salt);
-
-  const newAccount = new Account({
-    Username: req.body.Username,
-    Password: hash,
-    Email: req.body.Email,
-  });
-
-  try {
-    const existingUsername = await Account.findOne({
-      Username: req.body.Username,
-    });
-    const existingEmail = await Account.findOne({ Email: req.body.Email });
-
-    if (existingUsername) {
-      return res.status(409).json({
-        success: false,
-        message: "Username already exists.",
-      });
-    }
-
-    if (existingEmail) {
-      return res.status(409).json({
-        success: false,
-        message: "Email already exists.",
-      });
-    }
-
-    const accountData = await newAccount.save();
-    return res.status(201).json({
-      success: true,
-      message: "Successfully created account.",
-      data: accountData,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error,
-    });
-  }
-};
-
-
 export const verifyEmail = asyncHandler(async (req, res) => {
   const { token } = req.params;
 
@@ -127,12 +74,12 @@ export const verifyEmail = asyncHandler(async (req, res) => {
     }
 
     // If the account is already verified
-    if (account.Active) {
+    if (account.isActive) {
       return res.status(400).json({ success: false, message: 'Account already verified' });
     }
 
     // Set the account to verified
-    account.Active = true;
+    account.isActive = true;
     await account.save();
 
     res.status(200).json({ success: true, message: 'Account successfully verified!', data: account });

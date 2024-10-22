@@ -95,19 +95,26 @@ export const getAccount = async (req, res) => {
 };
 
 export const SignUp = asyncHandler(async (req, res) => {
-  const { Username, Email, Password } = req.body;
+  const { username, email, password } = req.body;
 
   // Make sure both email and password are provided
-  if (!Email || !Password) {
+  if (!email || !password) {
     return res
       .status(400)
       .json({ success: false, message: "Email and password are required." });
   }
 
   try {
+    const existingUsername = await Account.findOne({ username });
+    if (existingUsername) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Email is already registered." });
+    }
+
     // Check if the user already exists
-    const existingUser = await Account.findOne({ Email });
-    if (existingUser) {
+    const existingEmail = await Account.findOne({ email });
+    if (existingEmail) {
       return res
         .status(400)
         .json({ success: false, message: "Email is already registered." });
@@ -115,10 +122,10 @@ export const SignUp = asyncHandler(async (req, res) => {
 
     // Create a new account
     const account = new Account({
-      Username,
-      Email,
-      Password: bcrypt.hashSync(Password, 10), // hash the password
-      Active: false, // set account as not verified
+      username,
+      email,
+      password: bcrypt.hashSync(password, 10), // hash the password
+      isActive: false, // set account as not verified
     });
 
     // Save the account to the database
@@ -132,42 +139,46 @@ export const SignUp = asyncHandler(async (req, res) => {
     }
 
     const user = new User({
-      Email,
+      email,
       AccountId: savedAccount._id, // liên kết với account vừa tạo
-      Name: req.body.Name,
-      Gender:  req.body.Gender,
-      Phone:  req.body.Phone,
-      Address:  req.body.Address,
-      Photo: ""
+      name: req.body.name,
+      gender: req.body.gender,
+      phone: req.body.phone,
+      address: req.body.address,
+      photo: "",
     });
-    const savedUser = await user.save();
-    if (!savedUser) {
-      return res
-        .status(500)
-        .json({ success: false, message: "User creation failed." });
-    }
-    // Generate a verification token
-    const verificationToken = jwt.sign(
-      { userId: savedAccount._id },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "1h",
+
+    if (!existingUsername && !existingEmail) {
+      const savedUser = await user.save();
+      if (!savedUser) {
+        return res
+          .status(500)
+          .json({ success: false, message: "User creation failed." });
       }
-    );
 
-    // Generate the verification link
-    const verificationLink = `${req.protocol}://${req.get(
-      "host"
-    )}/auth/verify-email/${verificationToken}`;
+      // Generate a verification token
+      const verificationToken = jwt.sign(
+        { userId: savedAccount._id },
+        process.env.JWT_SECRET,
+        {
+          expiresIn: "1h",
+        }
+      );
 
-    // Send the verification email
-    await sendVerificationEmail(Email, verificationLink);
+      // Generate the verification link
+      const verificationLink = `${req.protocol}://${req.get(
+        "host"
+      )}/auth/verify-email/${verificationToken}`;
 
-    res.status(201).json({
-      success: true,
-      message:
-        "Account registered successfully! Please verify your email to activate your account.",
-    });
+      // Send the verification email
+      await sendVerificationEmail(email, verificationLink);
+
+      res.status(201).json({
+        success: true,
+        message:
+          "Account registered successfully! Please verify your email to activate your account.",
+      });
+    }
   } catch (error) {
     // Catch and return any errors
     res.status(500).json({ success: false, message: error.message });
