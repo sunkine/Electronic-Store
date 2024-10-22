@@ -9,10 +9,9 @@ const userSchema = new mongoose.Schema(
     Gender: {
       type: String,
       enum: ["Male", "Female"],
-      required: true,
     },
     Phone: {
-      type: Number,
+      type: String,
       required: true,
       unique: true,
     },
@@ -23,7 +22,7 @@ const userSchema = new mongoose.Schema(
     },
     Address: {
       type: String,
-      required: true
+      required: true,
     },
     Photo: {
       type: String,

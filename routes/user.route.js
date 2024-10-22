@@ -1,6 +1,5 @@
 import express from 'express'
-import { deleteUser, getAllUser, getOneUser, updateUser, createUser, forgotPasswordCtrl, resetPasswordCtrl, SignUp } from "../controllers/user.class.js";
-import { isLoggedin } from '../middlewares/checkLogin.js'
+import { deleteUser, getAllUser, getOneUser, updateUser, forgotPasswordCtrl, resetPasswordCtrl } from "../controllers/user.class.js";
 
 const router = express.Router()
 
@@ -9,7 +8,6 @@ router.get('/', getAllUser)
 //get one user
 router.get('/:id', getOneUser)
 //create a user
-router.post('/sign-up', SignUp)
 //update a user
 router.put('/:id', updateUser)
 //delete a user

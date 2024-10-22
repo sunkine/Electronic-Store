@@ -20,7 +20,7 @@ export const updateProductByID = async (req, res) => {
     const { ID_Product } = req.params; // Lấy ID_Product từ params
     const updatedData = req.body; // Dữ liệu cập nhật từ request body
 
-    const updatedProduct = await products.findOneAndUpdate(
+    const updatedProduct = await products.findByIdAndUpdate(
       { ID_Product },
       updatedData,
       { new: true }

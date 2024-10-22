@@ -24,7 +24,6 @@ const productsModel = new mongoose.Schema({
     }, 
     Image: {
         type: String,
-        required: true,
     },
     Status: {
         type: String,
