@@ -1,35 +1,35 @@
 import mongoose from "../config/mongoose.js"
 
 const productsModel = new mongoose.Schema({
-    ID_Product: {
+    idProduct: {
         type: String,
         required: true,
         unique: true,
     },
-    Name: {
+    name: {
         type: String,
         required: true,
     },
-    Quantity: {
+    quantity: {
         type: Number,
         default: 1,
     },
-    Price: {
+    price: {
         type: Number,
         required: true,
     },
-    ID_TypeProduct: {
+    idTypeProduct: {
         type: String,
         required: true,
     }, 
-    Image: {
+    image: {
         type: String,
     },
-    Status: {
+    status: {
         type: String,
         emum: ["Available", "Not availale"],
     },
 })
 
-const products = mongoose.model('products', productsModel)
-export default products;
+const Product = mongoose.model('products', productsModel)
+export default Product;
