@@ -97,7 +97,7 @@ export const getAccount = async (req, res) => {
 };
 
 export const SignUp = asyncHandler(async (req, res) => {
-  const { username, email, password } = req.body;
+  const { username, email, password, phone } = req.body;
 
   // Make sure both email and password are provided
   if (!email || !password) {
@@ -129,6 +129,13 @@ export const SignUp = asyncHandler(async (req, res) => {
       password: bcrypt.hashSync(password, 10), // hash the password
       isActive: false, // set account as not verified
     });
+
+    const existingPhone = await User.findOne({ phone });
+    if (existingPhone) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Phone is already registered." });
+    }
 
     // Save the account to the database
     const savedAccount = await account.save();

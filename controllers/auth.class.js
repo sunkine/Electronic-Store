@@ -76,7 +76,7 @@ export const verifyEmail = asyncHandler(async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // Find the account by the decoded ID
-    const account = await Account.findById(decoded.userId);
+    const account = await Account.findById(decoded.userAuthId);
     if (!account) {
       return res.status(404).json({ success: false, message: 'Account not found' });
     }

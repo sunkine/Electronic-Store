@@ -108,7 +108,7 @@ export const getOneUser = async (req, res) => {
 
 export const forgotPasswordCtrl = asyncHandler(async (req, res) => {
   // Check if the user exists
-  const user = await Account.findOne({ Email: req.body.Email });
+  const user = await Account.findOne({ email: req.body.email });
   if (!user) {
     res.status(401).json({
       status: "failed",
@@ -117,7 +117,7 @@ export const forgotPasswordCtrl = asyncHandler(async (req, res) => {
   }
   // Create a JWT token for password reset
   const resetToken = jwt.sign(
-    { userId: user._id },
+    { resetToken: user._id },
     process.env.JWT_SECRET, // You can use a separate secret for password reset if needed
     { expiresIn: "10m" } // Token will expire in 10 minutes
   );
@@ -131,7 +131,7 @@ export const forgotPasswordCtrl = asyncHandler(async (req, res) => {
   try {
     // Send the email
     await sendEmail({
-      email: user.Email,
+      email: user.email,
       subject: "Your Password Reset Token (valid for 10 minutes)",
       message,
     });
@@ -155,8 +155,8 @@ export const resetPasswordCtrl = asyncHandler(async (req, res) => {
     // Verify the token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Find the user by the decoded ID
-    const user = await User.findById(decoded.userId);
+    // Find the account by the decoded ID
+    const user = await Account.findById(decoded.resetToken);
     if (!user) {
       return res
         .status(404)
@@ -164,7 +164,7 @@ export const resetPasswordCtrl = asyncHandler(async (req, res) => {
     }
 
     // Find the associated account using the user's email
-    const account = await Account.findOne({ Email: user.Email });
+    const account = await Account.findOne({ email: user.email });
     if (!account) {
       return res
         .status(404)
@@ -173,7 +173,7 @@ export const resetPasswordCtrl = asyncHandler(async (req, res) => {
 
     // Set the new password in the Account model
     const salt = await bcrypt.genSalt(10);
-    account.Password = await bcrypt.hash(req.body.Password, salt);
+    account.password = await bcrypt.hash(req.body.password, salt);
 
     // Save the updated account
     await account.save();
