@@ -1,22 +1,26 @@
 import mongoose from '../config/mongoose.js'
 
 const cartModel = new mongoose.Schema({
-    idProduct: {
-        type: String,
-        required: true,
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
     },
-    name: {
-        type: String,
-        required: true,
-    },
-    quantity: {
-        type: Number,
-        default: 1,
-    },
-    price: {
-        type: Number,
-        required: true,
-    }
+    products: [{
+        idProduct: {
+            type: String,
+            required: true,
+        },
+        nameOfProduct: {
+            type: String,
+        },
+        quantity: {
+            type: Number,
+            default: 1,
+        },
+        price: {
+            type: Number,
+        }
+    }]
 }, {timestamps: true})
 
 const Cart = mongoose.model('Cart', cartModel)

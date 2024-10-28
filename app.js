@@ -3,14 +3,15 @@ import dotenv from "dotenv";
 import cors from "cors";
 import bodyParser from "body-parser";
 import { queryParser } from "express-query-parser";
-
 import apiRoute  from './routes/api.route.js'
+import cookieParser from "cookie-parser";
 
 dotenv.config();
 const app = express();
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+app.use(cookieParser());
 // Enable CORS
 app.use(cors({
   origin: 'http://localhost:3001', // Hoặc dùng '*' nếu muốn cho phép mọi nguồn

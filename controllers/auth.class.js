@@ -15,11 +15,7 @@ export const SignIn = async (req, res) => {
       });
     }
 
-    
-    const isPasswordValid = await bcrypt.compare(
-      req.body.password,
-      account.password
-    );
+    const isPasswordValid = await bcrypt.compare(req.body.password, account.password);
     
     if (!isPasswordValid) {
       return res.status(401).json({
@@ -27,7 +23,7 @@ export const SignIn = async (req, res) => {
         message: "Incorrect email or password.",
       });
     }
-    
+
     if (!account.isActive) {
       return res.status(401).json({
         success: false,
@@ -35,27 +31,39 @@ export const SignIn = async (req, res) => {
       });
     }
 
-    const { password: pwHash, Role, ...userDetails } = account._doc;
+    const { password: pwHash, role, ...userDetails } = account._doc;
 
     // Create JWT token
-    const token = generateToken(account?.id);
+    const token = generateToken(account._id);
+    const refreshToken = generateToken(account._id);
 
     res
-      .cookie("accessToken", token, {
+    .cookie("userAuthId", token, {
+      httpOnly: true,
+      maxAge: 5 * 60 * 1000, // 7 days in milliseconds
+      secure: process.env.NODE_ENV === 'production', // Chỉ gửi cookie qua HTTPS trong môi trường production
+      sameSite: 'strict', // Chỉ gửi cookie trong cùng một domain
+    })
+
+    res
+      .cookie("refreshToken", refreshToken, {
         httpOnly: true,
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
+        secure: process.env.NODE_ENV === 'production', // Chỉ gửi cookie qua HTTPS trong môi trường production
+        sameSite: 'strict', // Chỉ gửi cookie trong cùng một domain
       })
       .status(200)
       .json({
         success: true,
         message: "Successfully logged in.",
-        token: token,
+        token,
         data: userDetails,
       });
   } catch (error) {
+    console.error(error); // Ghi lại lỗi để dễ dàng debug hơn
     return res.status(500).json({
       success: false,
-      message: error,
+      message: "Internal server error.",
     });
   }
 };

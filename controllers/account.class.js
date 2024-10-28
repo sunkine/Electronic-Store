@@ -49,30 +49,32 @@ export const deleteAccount = async (req, res) => {
 export const updateAccount = async (req, res) => {
   try {
     const id = req.params.id;
-    const salt = bcrypt.genSaltSync(10);
-    const hash = bcrypt.hashSync(req.body.Password, salt);
-    const idAcc = await Account.findByIdAndUpdate(
-      id,
-      {
-        $set: req.body,
-        Password: hash,
-      },
-      { new: true }
-    );
+    const updateData = { ...req.body }; // Sao chép dữ liệu cập nhật từ body
 
-    if (!idAcc) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Account not found." });
+    // Nếu có mật khẩu trong request, mã hóa mật khẩu trước khi cập nhật
+    if (req.body.password) {
+      const salt = bcrypt.genSaltSync(10);
+      const hash = bcrypt.hashSync(req.body.password, salt);
+      updateData.password = hash;
+    }
+
+    // Cập nhật tài khoản
+    const updatedAccount = await Account.findByIdAndUpdate(id, {
+      $set: updateData,
+    }, { new: true });
+
+    if (!updatedAccount) {
+      return res.status(404).json({ success: false, message: "Account not found." });
     } else {
       res.status(200).json({
         success: true,
         message: "Successfully updated.",
-        data: idAcc,
+        data: updatedAccount,
       });
     }
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error(error); // Ghi lại lỗi để dễ dàng debug hơn
+    res.status(500).json({ success: false, message: "Internal server error." });
   }
 };
 
@@ -158,7 +160,7 @@ export const SignUp = asyncHandler(async (req, res) => {
 
       // Generate a verification token
       const verificationToken = jwt.sign(
-        { userId: savedAccount._id },
+        { userAuthId: savedAccount._id },
         process.env.JWT_SECRET,
         {
           expiresIn: "1h",

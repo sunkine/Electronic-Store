@@ -11,6 +11,6 @@ router.get('/:id', getAccount)
 //delete account
 router.delete('/:id', deleteAccount)
 //update account
-router.put(':id', updateAccount)
+router.put('/:id', updateAccount)
 
 export default router;

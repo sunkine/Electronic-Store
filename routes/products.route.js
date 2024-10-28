@@ -1,5 +1,6 @@
 import express from "express";
 import { getAllProducts, createProduct, updateProductByID, deleteProductByID, getProduct, listProductSearch } from '../controllers/product.class.js';
+import isAdmin from "../middlewares/checkAdmin.js";
 
 const router = express.Router();
 
@@ -7,11 +8,11 @@ router.get('/:id', getProduct);
 
 router.get('/', getAllProducts);
 
-router.post('/', createProduct);
+router.post('/', isAdmin, createProduct);
 
-router.put('/:id', updateProductByID);
+router.put('/:id', isAdmin, updateProductByID);
 
-router.delete('/:id', deleteProductByID);
+router.delete('/:id', isAdmin, deleteProductByID);
 
 router.post('/search', listProductSearch)
 
