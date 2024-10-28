@@ -6,7 +6,7 @@ const productsModel = new mongoose.Schema({
         required: true,
         unique: true,
     },
-    name: {
+    nameOfProduct: {
         type: String,
         required: true,
     },

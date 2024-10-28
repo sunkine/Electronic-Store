@@ -2,7 +2,7 @@ import Cart from '../models/cart.model.js';
 import Product from '../models/product.model.js';
 
 export const addToCart = async (req, res) => {
-    const { idProduct, quantity = 1 } = req.body;
+    const { idProduct, quantity = 1, nameOfProduct, price } = req.body;
     const userId = req.cookies.userAuthId; // lấy userId từ middleware
 
     try {
