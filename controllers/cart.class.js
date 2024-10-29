@@ -50,3 +50,27 @@ export const deleteFromCart = async (req, res) => {
         res.status(500).json({ success: false, message: 'Server error' });
     }
 };
+
+
+export const getAllCart = async (req, res) => {
+    const page = parseInt(req.query.page);
+    try {
+      const cart = await Cart.find()
+        .limit(10)
+        .skip(page * 10);
+      if (!cart) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Cart is empty." });
+      } else {
+        res.status(200).json({
+          success: true,
+          message: "Successfully get all cart.",
+          total: cart.length,
+          data: cart,
+        });
+      }
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  };

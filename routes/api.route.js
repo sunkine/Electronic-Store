@@ -10,11 +10,12 @@ const productRoute = '/product'
 const authRoute = '/auth'
 const accountRoute = '/account'
 const userRoute = '/user'
+const cartRoute = '/cart'
 
 app.use(productRoute, ProductRouter)
 app.use(accountRoute, AccountRouter)
 app.use(userRoute, UserRouter)
 app.use(authRoute, AuthRouter)
-app.use('/', CartRoute)
+app.use(cartRoute, CartRoute)
 
 export default app;
