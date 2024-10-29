@@ -4,7 +4,7 @@ import { verifyToken } from "../middlewares/checkLogin.js";
 import Account from "../models/account.model.js";
 
 export const addToCart = async (req, res) => {
-  const { idProduct, quantity = 1, nameOfProduct, price } = req.body;
+  const { idProduct, quantity = 1} = req.body;
   const token = req.cookies.userAuthId; // lấy userId từ middleware
 
   const userId = verifyToken(token);
@@ -21,6 +21,7 @@ export const addToCart = async (req, res) => {
         .json({ success: false, message: "Product not found" });
     }
 
+    const {nameOfProduct, price} = product;
     let acc = await Account.findById(userId);
     if (!acc) {
       return res
