@@ -1,26 +1,40 @@
 import mongoose from "../config/mongoose.js"
 
 const orderModel = new mongoose.Schema({
-    idOrder: {
-        type: String,
-        required: true,
-        unique: true,
-    },
-    idStaff: {
+    nameCustomer: {
         type: String,
         required: true,
     },
-    idCustomer: {
+    phone: {
+        type: String,
+        required: true,
+    },
+    address: {
         type: String,
         required: true,
     },
     dateOrder: {
         type: Date,
-        required: true,
+    },
+    dateReceived: {
+        type: Date,
     },
     totalPrice: {
         type: Number,
         required: true,
+    },
+    payment_method: {
+        type: String,
+        enum: ["Momo","Cash", "COD"],
+        default: "Cash",
+    },
+    isPayment: {
+        type: Boolean,
+        default: false,
+    },
+    idCart: {
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: "Cart"
     },
     status: {
         type: String,

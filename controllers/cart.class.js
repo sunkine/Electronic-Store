@@ -14,7 +14,7 @@ export const addToCart = async (req, res) => {
   }
 
   try {
-    const product = await Product.findById(idProduct);
+    const product = await Product.findOne({idProduct});
     if (!product) {
       return res
         .status(404)

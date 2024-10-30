@@ -1,6 +1,10 @@
 import mongoose from '../config/mongoose.js'
 
 const cartModel = new mongoose.Schema({
+    isOrder: {
+        type: Boolean,
+        default: false,
+    },
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",

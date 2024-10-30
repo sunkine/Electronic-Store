@@ -5,6 +5,7 @@ import { sendEmail, sendVerificationEmail } from "../utils/sendEmail.js";
 import bcrypt from "bcryptjs";
 import generateToken from "../utils/createToken.js";
 import Account from "../models/account.model.js";
+import { verifyToken } from "../middlewares/checkLogin.js";
 
 export const createUser = async (req, res) => {
   const newUser = new User(req.body);
@@ -89,7 +90,19 @@ export const getAllUser = async (req, res) => {
 export const getOneUser = async (req, res) => {
   try {
     const id = req.params.id;
-    const user = await User.findById(id);
+
+    const token = req.cookies.userAuthId; // lấy userId từ middleware
+
+    const userId = verifyToken(token);
+
+    const acc = await Account.findById(userId)
+    if (!acc) {
+      return res.status(401).json({ success: false, message: "Invalid token" });
+    }
+
+    const {email} = acc;
+    const user = await User.findOne({email});
+    
     if (!user) {
       return res
         .status(404)
