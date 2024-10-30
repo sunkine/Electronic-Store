@@ -15,13 +15,13 @@ const orderModel = new mongoose.Schema({
     },
     dateOrder: {
         type: Date,
+        default: Date.now,
     },
     dateReceived: {
         type: Date,
     },
     totalPrice: {
         type: Number,
-        required: true,
     },
     payment_method: {
         type: String,
@@ -34,7 +34,7 @@ const orderModel = new mongoose.Schema({
     },
     idCart: {
         type: mongoose.SchemaTypes.ObjectId,
-        ref: "Cart"
+        ref: "Cart",
     },
     status: {
         type: String,
