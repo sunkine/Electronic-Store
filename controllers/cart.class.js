@@ -43,7 +43,7 @@ export const addToCart = async (req, res) => {
     }
 
     await cart.save();
-    res.status(200).json({ success: true, cart });
+    res.status(200).json({ success: true, data: cart });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: "Server error" });
@@ -80,7 +80,7 @@ export const deleteFromCart = async (req, res) => {
       await cart.save();
       return res
         .status(200)
-        .json({ success: true, message: "Product removed from cart", cart });
+        .json({ success: true, message: "Product removed from cart", data: cart });
     } else {
       return res
         .status(404)

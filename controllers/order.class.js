@@ -19,10 +19,14 @@ export const createOrder = async (req, res) => {
     }
 
     // Tính tổng tiền đơn hàng
-    const totalPrice = cart.products.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const totalPrice = cart.products.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
 
     // Tạo đơn hàng mới
     const order = new Order({
+      idCustomer: userId,
       nameCustomer: req.body.nameCustomer,
       phone: req.body.phone,
       address: req.body.address,
@@ -32,7 +36,7 @@ export const createOrder = async (req, res) => {
       payment_method: req.body.payment_method || "Cash",
       isPayment: req.body.isPayment || false,
       idCart: cart._id,
-      status: req.body.status || "Chờ xác nhận"
+      status: req.body.status || "Chờ thanh toán",
     });
 
     // Lưu đơn hàng vào cơ sở dữ liệu
@@ -43,7 +47,9 @@ export const createOrder = async (req, res) => {
     cart.isOrder = false;
     await cart.save();
 
-    res.status(201).json({ success: true, message: "Order created successfully", order });
+    res
+      .status(201)
+      .json({ success: true, message: "Order created successfully", order });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: "Server error" });
@@ -73,30 +79,33 @@ export const getAllOrder = async (req, res) => {
   }
 };
 
-// export const getOneOrder = async (req, res) => {
-//   try {
-//     const _id = req.userAuthId;
-//     const account = await Account.findById(_id);
+export const getOrderById = async (req, res) => {
+  const _id = req.userAuthId;
+  const account = await Account.findById(_id);
 
-//     if (!account) {
-//       return res.status(200).json({
-//         success: false,
-//         message: "Account not found.",
-//       });
-//     }
+  if (!account) {
+    return res.status(200).json({
+      success: false,
+      message: "Account not found.",
+    });
+  }
 
-//     const order = 
+  try {
+    // Tìm các đơn hàng theo _id 
+    const orders = await Order.findOne({ idCustomer: _id })
 
-//     // Trả về thông tin người dùng
-//     res.status(200).json({
-//       success: true,
-//       message: "Successfully get user information.",
-//       data: user,
-//     });
-//   } catch (error) {
-//     res.status(500).json({ success: false, message: error.message });
-//   }
-// };
+    if (!orders) {
+      return res
+        .status(404)
+        .json({ success: false, message: "No orders found" });
+    }
+
+    res.status(200).json({ success: true, data: orders });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
 
 export const deleteOrder = async (req, res) => {
   try {
