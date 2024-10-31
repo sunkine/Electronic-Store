@@ -4,31 +4,17 @@ import { verifyToken } from "./checkLogin.js";
 
 const isAdmin = async (req, res, next) => {
   try {
-    // Lấy token từ cookie
-    const token = req.cookies.userAuthId; 
-
-    if (!token) {
-      return res.status(403).json({
+    const userId = req.userAuthId;
+    const acc = await Account.findById(userId);
+  
+    if (!acc) {
+      return res.status(200).json({
         success: false,
-        message: "Access denied, no token provided",
+        message: "Account not found.",
       });
     }
 
-    // Xác thực và giải mã token
-    const decoded = verifyToken(token);
-    req.userAuthId = decoded.id; // Gán id từ payload vào req.userAuthId
-
-    // Truy vấn user từ database
-    const user = await Account.findById(req.userAuthId);
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found.",
-      });
-    }
-
-    if (user.role === "admin") {
+    if (acc.role === "admin") {
       next(); // Cho phép tiếp tục nếu là admin
     } else {
       return res.status(403).json({

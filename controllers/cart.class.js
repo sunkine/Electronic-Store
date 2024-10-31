@@ -5,12 +5,15 @@ import Account from "../models/account.model.js";
 
 export const addToCart = async (req, res) => {
   const { idProduct, quantity = 1} = req.body;
-  const token = req.cookies.userAuthId; // lấy userId từ middleware
 
-  const userId = verifyToken(token);
+  const userId = req.userAuthId;
+  const acc = await Account.findById(userId);
 
-  if (!userId) {
-    return res.status(401).json({ success: false, message: "Invalid token" });
+  if (!acc) {
+    return res.status(200).json({
+      success: false,
+      message: "Account not found.",
+    });
   }
 
   try {
@@ -22,7 +25,7 @@ export const addToCart = async (req, res) => {
     }
 
     const {nameOfProduct, price} = product;
-    let acc = await Account.findById(userId);
+    const acc = await Account.findById(userId);
     if (!acc) {
       return res
         .status(404)
@@ -56,22 +59,34 @@ export const addToCart = async (req, res) => {
 
 export const deleteFromCart = async (req, res) => {
   const { idProduct } = req.body;
-  const userId = req.cookies.userAuthId;
+
+  const userId = req.userAuthId;
+  const acc = await Account.findById(userId);
+
+  if (!acc) {
+    return res.status(200).json({
+      success: false,
+      message: "Account not found.",
+    });
+  }
 
   try {
-    const cart = await Cart.findOne({ userId });
+    let cart = await Cart.findOne({ userId });
     if (!cart) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Cart not found" });
+      return res.status(404).json({ success: false, message: "Cart not found" });
     }
 
-    cart.products = cart.products.filter(
-      (item) => item.idProduct.toString() !== idProduct
+    const productIndex = cart.products.findIndex(
+      (item) => item.idProduct.toString() === idProduct
     );
-    await cart.save();
 
-    res.status(200).json({ success: true, cart });
+    if (productIndex > -1) {
+      cart.products.splice(productIndex, 1);
+      await cart.save();
+      return res.status(200).json({ success: true, message: "Product removed from cart", cart });
+    } else {
+      return res.status(404).json({ success: false, message: "Product not found in cart" });
+    }
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: "Server error" });

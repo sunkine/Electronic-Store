@@ -39,6 +39,7 @@ export const createOrder = async (req, res) => {
 
     // Làm trống giỏ hàng sau khi tạo đơn hàng thành công
     cart.products = [];
+    cart.isOrder = false;
     await cart.save();
 
     res.status(201).json({ success: true, message: "Order created successfully", order });

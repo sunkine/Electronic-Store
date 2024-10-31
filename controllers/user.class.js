@@ -21,9 +21,21 @@ export const createUser = async (req, res) => {
 
 export const updateUser = async (req, res) => {
   try {
-    const id = req.params.id;
+    const _id = req.userAuthId;
+    const account = await Account.findById(_id);
+
+    if (!account) {
+      return res.status(200).json({
+        success: false,
+        message: "Account not found.",
+      });
+    }
+
+    const { email } = account;
+    const user = await User.findOne({ email });
+    
     const idUserUpdated = await User.findByIdAndUpdate(
-      id,
+      user._id,
       {
         $set: req.body,
       },
@@ -89,31 +101,30 @@ export const getAllUser = async (req, res) => {
 
 export const getOneUser = async (req, res) => {
   try {
-    const id = req.params.id;
+    const _id = req.userAuthId;
+    const account = await Account.findById(_id);
 
-    const token = req.cookies.userAuthId; // lấy userId từ middleware
-
-    const userId = verifyToken(token);
-
-    const acc = await Account.findById(userId)
-    if (!acc) {
-      return res.status(401).json({ success: false, message: "Invalid token" });
+    if (!account) {
+      return res.status(200).json({
+        success: false,
+        message: "Account not found.",
+      });
     }
 
-    const {email} = acc;
-    const user = await User.findOne({email});
-    
+    const { email } = account;
+    const user = await User.findOne({ email });
+
     if (!user) {
       return res
         .status(404)
         .json({ success: false, message: "User not found." });
-    } else {
-      res.status(200).json({
-        success: true,
-        messgae: "Successfully get user information.",
-        data: user,
-      });
     }
+    // Trả về thông tin người dùng
+    res.status(200).json({
+      success: true,
+      message: "Successfully get user information.",
+      data: user,
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

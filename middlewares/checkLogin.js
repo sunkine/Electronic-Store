@@ -29,7 +29,7 @@ export const isLoggedin = (req, res, next) => {
         throw new Error("Invalid/Expired Token, please login again");
     }
     else {
-        req.userAuthId = decodedUser?.id;
+        req.userAuthId = decodedUser?._id;
         next();
     }
 }

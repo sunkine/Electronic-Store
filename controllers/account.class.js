@@ -48,9 +48,9 @@ export const deleteAccount = async (req, res) => {
 
 export const updateAccount = async (req, res) => {
   try {
-    const id = req.params.id;
-    const updateData = { ...req.body }; // Sao chép dữ liệu cập nhật từ body
+    const _id = req.userAuthId;
 
+    const updateData = { ...req.body }; // Sao chép dữ liệu cập nhật từ body
     // Nếu có mật khẩu trong request, mã hóa mật khẩu trước khi cập nhật
     if (req.body.password) {
       const salt = bcrypt.genSaltSync(10);
@@ -59,7 +59,7 @@ export const updateAccount = async (req, res) => {
     }
 
     // Cập nhật tài khoản
-    const updatedAccount = await Account.findByIdAndUpdate(id, {
+    const updatedAccount = await Account.findByIdAndUpdate(_id, {
       $set: updateData,
     }, { new: true });
 

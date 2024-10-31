@@ -40,7 +40,7 @@ export const SignIn = async (req, res) => {
     res
     .cookie("userAuthId", token, {
       httpOnly: true,
-      maxAge: 5 * 60 * 1000, // 7 days in milliseconds
+      maxAge: 5 * 60 * 1000, // 5 minutes in milliseconds
       secure: process.env.NODE_ENV === 'production', // Chỉ gửi cookie qua HTTPS trong môi trường production
       sameSite: 'strict', // Chỉ gửi cookie trong cùng một domain
     })
