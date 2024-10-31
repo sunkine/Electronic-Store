@@ -80,7 +80,11 @@ export const deleteFromCart = async (req, res) => {
       await cart.save();
       return res
         .status(200)
-        .json({ success: true, message: "Product removed from cart", data: cart });
+        .json({
+          success: true,
+          message: "Product removed from cart",
+          data: cart,
+        });
     } else {
       return res
         .status(404)
@@ -127,7 +131,7 @@ export const getCartById = async (req, res) => {
   }
 
   try {
-    const cart = await Cart.findOne({userId: _id});
+    const cart = await Cart.findOne({ userId: _id });
 
     if (!cart) {
       return res
@@ -142,5 +146,42 @@ export const getCartById = async (req, res) => {
     }
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const clearCart = async (req, res) => {
+  const _id = req.userAuthId;
+  const account = await Account.findById(_id);
+
+  if (!account) {
+    return res.status(200).json({
+      success: false,
+      message: "Account not found.",
+    });
+  }
+
+  try {
+    // Tìm giỏ hàng của người dùng
+    const cart = await Cart.findOne({ userId: _id });
+    if (!cart) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Cart not found" });
+    }
+
+    if (cart.products.length === 0) {
+      return res.status(401).json({ success: false, message: "Cart already empty" });
+    }
+
+    // Làm trống giỏ hàng
+    cart.products = [];
+    await cart.save();
+
+    res
+      .status(200)
+      .json({ success: true, message: "Cart cleared successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
