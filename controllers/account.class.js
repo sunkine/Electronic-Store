@@ -50,7 +50,14 @@ export const updateAccount = async (req, res) => {
   try {
     const _id = req.userAuthId;
 
-    const updateData = { ...req.body }; // Sao chép dữ liệu cập nhật từ body
+    const updateData = { ...req.body };
+    const isRole = await Account.findById({_id})
+
+    // Kiểm tra nếu người dùng không phải là admin, loại bỏ trường role
+    if (isRole.role !== 'admin') {
+      delete updateData.role;
+      return res.status(404).json({ success: false, message: "Cannot updated role, admin only." });
+    }
     // Nếu có mật khẩu trong request, mã hóa mật khẩu trước khi cập nhật
     if (req.body.password) {
       const salt = bcrypt.genSaltSync(10);
@@ -73,7 +80,7 @@ export const updateAccount = async (req, res) => {
       });
     }
   } catch (error) {
-    console.error(error); // Ghi lại lỗi để dễ dàng debug hơn
+    console.error(error);
     res.status(500).json({ success: false, message: "Internal server error." });
   }
 };
