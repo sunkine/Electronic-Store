@@ -1,15 +1,14 @@
 import Cart from "../models/cart.model.js";
 import Product from "../models/product.model.js";
-import { verifyToken } from "../middlewares/checkLogin.js";
 import Account from "../models/account.model.js";
 
 export const addToCart = async (req, res) => {
-  const { idProduct, quantity = 1} = req.body;
+  const { idProduct, quantity = 1 } = req.body;
 
   const userId = req.userAuthId;
-  const acc = await Account.findById(userId);
+  const account = await Account.findById(userId);
 
-  if (!acc) {
+  if (!account) {
     return res.status(200).json({
       success: false,
       message: "Account not found.",
@@ -17,20 +16,14 @@ export const addToCart = async (req, res) => {
   }
 
   try {
-    const product = await Product.findOne({idProduct});
+    const product = await Product.findOne({ idProduct });
     if (!product) {
       return res
         .status(404)
         .json({ success: false, message: "Product not found" });
     }
 
-    const {nameOfProduct, price} = product;
-    const acc = await Account.findById(userId);
-    if (!acc) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Account not found" });
-    }
+    const { nameOfProduct, price } = product;
 
     let cart = await Cart.findOne({ userId });
     if (!cart) {
@@ -61,9 +54,9 @@ export const deleteFromCart = async (req, res) => {
   const { idProduct } = req.body;
 
   const userId = req.userAuthId;
-  const acc = await Account.findById(userId);
+  const account = await Account.findById(userId);
 
-  if (!acc) {
+  if (!account) {
     return res.status(200).json({
       success: false,
       message: "Account not found.",
@@ -73,7 +66,9 @@ export const deleteFromCart = async (req, res) => {
   try {
     let cart = await Cart.findOne({ userId });
     if (!cart) {
-      return res.status(404).json({ success: false, message: "Cart not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Cart not found" });
     }
 
     const productIndex = cart.products.findIndex(
@@ -83,9 +78,13 @@ export const deleteFromCart = async (req, res) => {
     if (productIndex > -1) {
       cart.products.splice(productIndex, 1);
       await cart.save();
-      return res.status(200).json({ success: true, message: "Product removed from cart", cart });
+      return res
+        .status(200)
+        .json({ success: true, message: "Product removed from cart", cart });
     } else {
-      return res.status(404).json({ success: false, message: "Product not found in cart" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Product not found in cart" });
     }
   } catch (error) {
     console.error(error);
@@ -108,6 +107,36 @@ export const getAllCart = async (req, res) => {
         success: true,
         message: "Successfully get all cart.",
         total: cart.length,
+        data: cart,
+      });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const getCartById = async (req, res) => {
+  const _id = req.userAuthId;
+  const account = await Account.findById(_id);
+
+  if (!account) {
+    return res.status(200).json({
+      success: false,
+      message: "Account not found.",
+    });
+  }
+
+  try {
+    const cart = await Cart.findOne({userId: _id});
+
+    if (!cart) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Cart not found with this account." });
+    } else {
+      res.status(200).json({
+        success: true,
+        message: "Successfully get cart.",
         data: cart,
       });
     }

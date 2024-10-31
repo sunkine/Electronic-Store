@@ -1,6 +1,10 @@
 import mongoose from "../config/mongoose.js"
 
 const orderModel = new mongoose.Schema({
+    idCustomer: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Account",
+    },
     nameCustomer: {
         type: String,
         required: true,
@@ -39,8 +43,8 @@ const orderModel = new mongoose.Schema({
     status: {
         type: String,
         required: true,
-        enum: ["Chờ xác nhận", "Chờ lấy hàng", "Đang vận chuyển", "Đang giao hàng", "Đã giao"],
-        default: "Chờ xác nhận",
+        enum: ["Chờ thanh toán", "Đã thanh toán"],
+        default: "Chờ thanh toán",
     },
 })
 

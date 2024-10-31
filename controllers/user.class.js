@@ -1,11 +1,5 @@
 import User from "../models/user.model.js";
-import asyncHandler from "express-async-handler";
-import jwt from "jsonwebtoken";
-import { sendEmail, sendVerificationEmail } from "../utils/sendEmail.js";
-import bcrypt from "bcryptjs";
-import generateToken from "../utils/createToken.js";
 import Account from "../models/account.model.js";
-import { verifyToken } from "../middlewares/checkLogin.js";
 
 export const createUser = async (req, res) => {
   const newUser = new User(req.body);
@@ -21,7 +15,6 @@ export const createUser = async (req, res) => {
 
 export const updateUser = async (req, res) => {
   try {
-    const _id = req.userAuthId;
     const account = await Account.findById(_id);
 
     if (!account) {
@@ -129,95 +122,3 @@ export const getOneUser = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-
-export const forgotPasswordCtrl = asyncHandler(async (req, res) => {
-  // Check if the user exists
-  const user = await Account.findOne({ email: req.body.email });
-  if (!user) {
-    res.status(401).json({
-      status: "failed",
-      message: "Not found your. Please check your email!.",
-    });
-  }
-  // Create a JWT token for password reset
-  const resetToken = jwt.sign(
-    { resetToken: user._id },
-    process.env.JWT_SECRET, // You can use a separate secret for password reset if needed
-    { expiresIn: "10m" } // Token will expire in 10 minutes
-  );
-
-  // Generate reset URL with the JWT token
-  const resetURL = `${req.protocol}://${req.get(
-    "host"
-  )}/user/reset-password/${resetToken}`;
-  const message = `Forgot your password? Click this link to reset it: ${resetURL}`;
-
-  try {
-    // Send the email
-    await sendEmail({
-      email: user.email,
-      subject: "Your Password Reset Token (valid for 10 minutes)",
-      message,
-    });
-
-    res.status(200).json({
-      status: "success",
-      message: "Token sent to email!",
-    });
-  } catch (err) {
-    res.status(500).json({
-      status: "failed",
-      message: err.message,
-    });
-  }
-});
-
-export const resetPasswordCtrl = asyncHandler(async (req, res) => {
-  const { token } = req.params;
-
-  try {
-    // Verify the token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // Find the account by the decoded ID
-    const user = await Account.findById(decoded.resetToken);
-    if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
-    }
-
-    // Find the associated account using the user's email
-    const account = await Account.findOne({ email: user.email });
-    if (!account) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Account not found" });
-    }
-
-    // Set the new password in the Account model
-    const salt = await bcrypt.genSalt(10);
-    account.password = await bcrypt.hash(req.body.password, salt);
-
-    // Save the updated account
-    await account.save();
-
-    // Send response without returning the password
-    res.status(200).json({
-      status: "success",
-      message: "Password reset successful!",
-      token: generateToken(user._id), // Log the user in after resetting password
-    });
-  } catch (err) {
-    if (err.name === "TokenExpiredError") {
-      return res
-        .status(401)
-        .json({ success: false, message: "Token has expired" });
-    } else if (err.name === "JsonWebTokenError") {
-      return res.status(401).json({ success: false, message: "Invalid token" });
-    }
-
-    // Other errors
-    res.status(500).json({ success: false, message: "An error occurred" });
-  }
-});

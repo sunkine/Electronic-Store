@@ -1,9 +1,14 @@
 import express from 'express'
-import {createOrder} from "../controllers/order.class.js"
+import {createOrder, deleteOrder, getAllOrder, updateOrder} from "../controllers/order.class.js"
+import { isLoggedin } from '../middlewares/checkLogin.js'
+import isAdmin from '../middlewares/checkAdmin.js'
 
 const router = express.Router()
 
-//create order
 router.post("/", createOrder)
+router.get("/", isLoggedin, isAdmin, getAllOrder)
+// router.get("/:id", isLoggedin, getOneOrder)
+router.put('/:id', isLoggedin, isAdmin, updateOrder)
+router.delete("/:id", isLoggedin, isAdmin, deleteOrder)
 
 export default router;
