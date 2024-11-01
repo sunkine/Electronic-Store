@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import asyncHandler from "express-async-handler";
 import { sendEmail, sendVerificationEmail } from "../utils/sendEmail.js";
-import generateToken from "../utils/createToken.js"
+import generateAccessToken from "../utils/createToken.js"
 
 
 export const getAllAccount = async (req, res) => {
@@ -279,7 +279,7 @@ export const resetPasswordCtrl = asyncHandler(async (req, res) => {
     res.status(200).json({
       status: "success",
       message: "Password reset successful!",
-      token: generateToken(account._id),
+      token: generateAccessToken(account._id),
     });
   } catch (err) {
     if (err.name === "TokenExpiredError") {

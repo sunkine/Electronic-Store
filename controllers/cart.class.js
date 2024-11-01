@@ -148,6 +148,7 @@ export const getCartById = async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
+}
 
 export const clearCart = async (req, res) => {
   const _id = req.userAuthId;
