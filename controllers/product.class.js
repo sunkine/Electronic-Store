@@ -1,27 +1,42 @@
-import Product from "../models/products.model.js";
+import Product from "../models/product.model.js";
 
 export const createProduct = async (req, res) => {
   try {
-    const productData = req.body; // Lấy dữ liệu sản phẩm từ request body
-    const newProduct = new Product(productData); // Tạo đối tượng mới từ model
-    await newProduct.save(); // Lưu sản phẩm mới vào database
+    const productData = req.body; // Dữ liệu sản phẩm từ request body
+    const imagePath = req.file ? req.file.path : ""; // Kiểm tra nếu có tệp hình ảnh được tải lên
+
+    // Tạo đối tượng sản phẩm mới
+    const newProduct = new Product({
+      ...productData,
+      image: imagePath, // Lưu đường dẫn hình ảnh vào cơ sở dữ liệu
+    });
+
+    await newProduct.save(); // Lưu sản phẩm mới vào cơ sở dữ liệu
 
     res.status(201).json({
       success: true,
-      message: "Product created successfully.",
+      message: "Tạo sản phẩm thành công.",
       data: newProduct,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 export const updateProductByID = async (req, res) => {
   try {
-    const id = req.params.id; 
-    const updatedData = req.body; // Dữ liệu cập nhật từ request body
+    const idProduct = req.params.id;
+    const updatedData = { ...req.body };
 
-    const updatedProduct = await Product.findByIdAndUpdate(
-      id,
+    // If there's a new image file, add its path to updatedData
+    if (req.file) {
+      updatedData.image = req.file.path.replace(/\\/g, '/'); // Adjust path format if necessary
+    }
+
+    console.log('Dữ liệu cập nhật:', updatedData);
+
+    const updatedProduct = await Product.findOneAndUpdate(
+      { idProduct },
       updatedData,
       { new: true }
     );
@@ -43,10 +58,13 @@ export const updateProductByID = async (req, res) => {
   }
 };
 
+
+
+
 export const deleteProductByID = async (req, res) => {
   try {
-    const { ID_Product } = req.params; // Lấy ID_Product từ params
-    const deletedProduct = await Product.findOneAndDelete({ ID_Product }); // Xóa sản phẩm theo ID_Product
+    const { id } = req.params; // Lấy id từ params
+    const deletedProduct = await Product.findOneAndDelete({ idProduct: id }); // Xóa sản phẩm theo idProduct
 
     if (!deletedProduct) {
       return res.status(404).json({
@@ -64,6 +82,7 @@ export const deleteProductByID = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 export const getAllProducts = async (req, res) => {
   const page = parseInt(req.query.page);
@@ -126,3 +145,4 @@ export const listProductSearch = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
