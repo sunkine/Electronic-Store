@@ -2,30 +2,29 @@ import mongoose from "../config/mongoose.js";
 
 const userSchema = new mongoose.Schema(
   {
-    Name: {
+    name: {
       type: String,
       required: true,
     },
-    Gender: {
+    gender: {
       type: String,
       enum: ["Male", "Female"],
-      required: true,
     },
-    Phone: {
-      type: Number,
-      required: true,
-      unique: true,
-    },
-    Email: {
+    phone: {
       type: String,
       required: true,
       unique: true,
     },
-    Address: {
+    email: {
       type: String,
-      required: true
+      required: true,
+      unique: true,
     },
-    Photo: {
+    address: {
+      type: String,
+      required: true,
+    },
+    photo: {
       type: String,
     },
   },

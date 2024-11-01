@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken"
+
 export const verifyToken = (token) => {
     return jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
         if (err) {
@@ -28,7 +29,7 @@ export const isLoggedin = (req, res, next) => {
         throw new Error("Invalid/Expired Token, please login again");
     }
     else {
-        req.userAuthId = decodedUser?.id;
+        req.userAuthId = decodedUser?._id;
         next();
     }
 }

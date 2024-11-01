@@ -17,11 +17,9 @@ const providerModel = new mongoose.Schema({
     },
     address: {
         type: String,
-        requried: true,
     },
     gmail: {
-        type: String,
-        required: true,
+        type: String,a
     }
 })
 
