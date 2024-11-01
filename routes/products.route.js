@@ -1,10 +1,10 @@
 import express from "express";
+
 import { getAllProducts, createProduct, updateProductByID, deleteProductByID, getProduct, listProductSearch } from '../controllers/product.class.js';
 import upload from '../middlewares/upload.js';
 
-const router = express.Router();
 
-router.get('/:id', getProduct);
+const router = express.Router();
 
 router.get('/', getAllProducts);
 
@@ -16,5 +16,5 @@ router.delete('/:id', deleteProductByID);
 
 router.post('/search', listProductSearch);
 
-
 export default router;
+

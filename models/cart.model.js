@@ -1,23 +1,36 @@
-import mongoose from '../config/mongoose.js'
+import mongoose from "../config/mongoose.js";
 
-const cartModel = new mongoose.Schema({
-    idProduct: {
-        type: String,
-        required: true,
+const cartModel = new mongoose.Schema(
+  {
+    isOrder: {
+      type: Boolean,
+      default: false,
     },
-    name: {
-        type: String,
-        required: true,
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Account",
     },
-    quantity: {
-        type: Number,
-        default: 1,
-    },
-    price: {
-        type: Number,
-        required: true,
-    }
-}, {timestamps: true})
+    products: [
+      {
+        idProduct: {
+          type: String,
+          required: true,
+        },
+        nameOfProduct: {
+          type: String,
+        },
+        quantity: {
+          type: Number,
+          default: 1,
+        },
+        price: {
+          type: Number,
+        },
+      },
+    ],
+  },
+  { timestamps: true }
+);
 
-const Cart = mongoose.model('Cart', cartModel)
+const Cart = mongoose.model("Cart", cartModel);
 export default Cart;
