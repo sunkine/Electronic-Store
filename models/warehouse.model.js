@@ -1,4 +1,4 @@
-import mongoose from "../config/mongoose";
+import mongoose from "../config/mongoose.js";
 
 const wareouseModel = new mongoose.Schema({
   idProduct: {

@@ -81,10 +81,7 @@ export const getAllProviders = async (req, res) => {
       .limit(10) // Giới hạn số lượng nhà cung cấp trả về
       .skip(page * 10); // Bỏ qua số lượng nhà cung cấp tương ứng với trang
 
-    if (!providers.length) {
-      return res.status(404).json({ success: false, message: "Không có nhà cung cấp nào." });
-    }
-
+    // Instead of checking if providers.length, just return an empty array with a success message
     res.status(200).json({
       success: true,
       message: "Lấy tất cả nhà cung cấp thành công.",
@@ -95,6 +92,7 @@ export const getAllProviders = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 // Lấy thông tin một nhà cung cấp theo ID
 export const getProvider = async (req, res) => {
