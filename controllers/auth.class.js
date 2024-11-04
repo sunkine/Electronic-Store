@@ -62,7 +62,7 @@ export const SignIn = async (req, res) => {
         data: userDetails,
       });
   } catch (error) {
-    console.error(error); // Ghi lại lỗi để dễ dàng debug hơn
+    console.error(error); 
     return res.status(500).json({
       success: false,
       message: "Internal server error.",

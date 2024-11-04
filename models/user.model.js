@@ -2,6 +2,10 @@ import mongoose from "../config/mongoose.js";
 
 const userSchema = new mongoose.Schema(
   {
+    idAccount: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+    },
     name: {
       type: String,
       required: true,
