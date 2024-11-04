@@ -170,10 +170,10 @@ export const SignUp = asyncHandler(async (req, res) => {
       const user = new User({
         email,
         idAccount: savedAccount._id, // liên kết với account vừa tạo
-        name: req.body.name,
-        gender: req.body.gender,
-        phone: req.body.phone,
-        address: req.body.address,
+        name: savedAccount.username,
+        gender: "",
+        phone: "",
+        address: "",
         photo: "",
       });
       const savedUser = await user.save();
