@@ -1,7 +1,6 @@
 import Order from "../models/order.model.js";
 import Cart from "../models/cart.model.js";
 import Account from "../models/account.model.js";
-import { verifyToken } from "../middlewares/checkLogin.js";
 
 export const createOrder = async (req, res) => {
   const userId = req.userAuthId;
@@ -94,8 +93,9 @@ export const getOrderById = async (req, res) => {
   }
 
   try {
+    const page = parseInt(req.query.page);
     // Tìm các đơn hàng theo _id 
-    const orders = await Order.findOne({ idCustomer: _id })
+    const orders = await Order.find({ idCustomer: _id }).limit(10).skip(page * 10);
 
     if (!orders) {
       return res
@@ -103,7 +103,7 @@ export const getOrderById = async (req, res) => {
         .json({ success: false, message: "No orders found" });
     }
 
-    res.status(200).json({ success: true, data: orders });
+    res.status(200).json({ success: true, total: orders.length, data: orders });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: "Server error" });

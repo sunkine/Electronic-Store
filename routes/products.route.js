@@ -1,12 +1,8 @@
 import express from "express";
-
 import { getAllProducts, createProduct, updateProductByID, deleteProductByID, getProduct, listProductSearch } from '../controllers/product.class.js';
 import { isLoggedin } from "../middlewares/checkLogin.js";
 import isAdmin from "../middlewares/checkAdmin.js";
 import upload from '../middlewares/upload.js';
-import { isLoggedin } from "../middlewares/checkLogin.js";
-import isAdmin from "../middlewares/checkAdmin.js";
-
 
 const router = express.Router();
 

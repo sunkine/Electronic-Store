@@ -62,7 +62,7 @@ export const updateAccount = async (req, res) => {
     const user = req.userAuthId;
 
     const updateData = { ...req.body };
-    const isRole = await Account.findById({ user });
+    const isRole = await Account.findById(user);
 
     if (isRole.role !== "admin") {
       delete updateData.role;
@@ -79,7 +79,7 @@ export const updateAccount = async (req, res) => {
 
     // Cập nhật tài khoản
     const updatedAccount = await Account.findByIdAndUpdate(
-      user._id,
+      user,
       {
         $set: updateData,
       },
@@ -105,15 +105,19 @@ export const updateAccount = async (req, res) => {
 
 export const getAccount = async (req, res) => {
   try {
-    const id = req.params.id;
-    const acc = await Account.findById(id);
-    if (!acc) {
-      res.status(404).json({ success: false, message: "Account not found." });
+    const _id = req.userAuthId;
+    const account = await Account.findById(_id);
+
+    if (!account) {
+      return res.status(200).json({
+        success: false,
+        message: "Account not found.",
+      });
     } else {
       res.status(200).json({
         success: true,
         message: "Successfully get account information.",
-        data: acc,
+        data: account,
       });
     }
   } catch (error) {
