@@ -4,11 +4,14 @@ import Account from "../models/account.model.js";
 import { verifyToken } from "../middlewares/checkLogin.js";
 
 export const createOrder = async (req, res) => {
-  const token = req.cookies.userAuthId;
-  const userId = verifyToken(token);
+  const userId = req.userAuthId;
+  const account = await Account.findById(userId);
 
-  if (!userId) {
-    return res.status(401).json({ success: false, message: "Invalid token" });
+  if (!account) {
+    return res.status(200).json({
+      success: false,
+      message: "Account not found.",
+    });
   }
 
   try {
@@ -149,4 +152,5 @@ export const updateOrder = async (req, res) => {
     }
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
-  
+  }
+}
