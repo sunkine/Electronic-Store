@@ -1,6 +1,9 @@
 import Account from "../models/account.model.js";
 import bcrypt from "bcryptjs";
-import generateToken from "../utils/createToken.js";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+} from "../utils/createToken.js";
 import asyncHandler from "express-async-handler";
 import jwt from "jsonwebtoken";
 
@@ -34,18 +37,11 @@ export const SignIn = async (req, res) => {
       });
     }
 
-    const { password: pwHash, role, ...userDetails } = account._doc;
+    const { password: pwHash, ...userDetails } = account._doc;
 
     // Create JWT token
-    const token = generateToken(account._id);
-    const refreshToken = generateToken(account._id);
-
-    res.cookie("userAuthId", token, {
-      httpOnly: true,
-      maxAge: 5 * 60 * 1000, // 5 minutes in milliseconds
-      secure: process.env.NODE_ENV === "production", // Chỉ gửi cookie qua HTTPS trong môi trường production
-      sameSite: "strict", // Chỉ gửi cookie trong cùng một domain
-    });
+    const accessToken = generateAccessToken(account._id);
+    const refreshToken = generateRefreshToken(account._id);
 
     res
       .cookie("refreshToken", refreshToken, {
@@ -58,11 +54,11 @@ export const SignIn = async (req, res) => {
       .json({
         success: true,
         message: "Successfully logged in.",
-        token,
+        accessToken,
         data: userDetails,
       });
   } catch (error) {
-    console.error(error); // Ghi lại lỗi để dễ dàng debug hơn
+    console.error(error); 
     return res.status(500).json({
       success: false,
       message: "Internal server error.",
@@ -115,3 +111,30 @@ export const verifyEmail = asyncHandler(async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 });
+
+export const refreshAccessToken = (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+
+  if (!refreshToken) {
+    return res
+      .status(403)
+      .json({ success: false, message: "Refresh token not provided" });
+  }
+
+  // Xác thực `refreshToken`
+  jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET, (err, decoded) => {
+    if (err) {
+      return res
+        .status(403)
+        .json({ success: false, message: "Invalid refresh token" });
+    }
+
+    // Tạo `accessToken` mới
+    const newAccessToken = generateAccessToken(decoded._id);
+
+    res.status(200).json({
+      success: true,
+      accessToken: newAccessToken,
+    });
+  });
+};

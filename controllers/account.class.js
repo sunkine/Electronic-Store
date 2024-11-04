@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import asyncHandler from "express-async-handler";
 import { sendEmail, sendVerificationEmail } from "../utils/sendEmail.js";
-import generateToken from "../utils/createToken.js"
+import generateAccessToken from "../utils/createToken.js"
 
 
 export const getAllAccount = async (req, res) => {
@@ -55,14 +55,13 @@ export const updateAccount = async (req, res) => {
     const updateData = { ...req.body };
     const isRole = await Account.findById({ _id });
 
-    // Kiểm tra nếu người dùng không phải là admin, loại bỏ trường role
     if (isRole.role !== "admin") {
       delete updateData.role;
       return res
         .status(404)
         .json({ success: false, message: "Cannot updated role, admin only." });
     }
-    // Nếu có mật khẩu trong request, mã hóa mật khẩu trước khi cập nhật
+
     if (req.body.password) {
       const salt = bcrypt.genSaltSync(10);
       const hash = bcrypt.hashSync(req.body.password, salt);
@@ -166,7 +165,7 @@ export const SignUp = asyncHandler(async (req, res) => {
 
     const user = new User({
       email,
-      AccountId: savedAccount._id, // liên kết với account vừa tạo
+      idAccount: savedAccount._id, // liên kết với account vừa tạo
       name: req.body.name,
       gender: req.body.gender,
       phone: req.body.phone,
@@ -174,7 +173,7 @@ export const SignUp = asyncHandler(async (req, res) => {
       photo: "",
     });
 
-    if (!existingUsername && !existingEmail) {
+    if (!existingUsername && !existingEmail &&!existingPhone) {
       const savedUser = await user.save();
       if (!savedUser) {
         return res
@@ -279,7 +278,7 @@ export const resetPasswordCtrl = asyncHandler(async (req, res) => {
     res.status(200).json({
       status: "success",
       message: "Password reset successful!",
-      token: generateToken(account._id),
+      token: generateAccessToken(account._id),
     });
   } catch (err) {
     if (err.name === "TokenExpiredError") {
