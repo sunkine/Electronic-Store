@@ -19,9 +19,9 @@ const providerModel = new mongoose.Schema({
         type: String,
     },
     gmail: {
-        type: String,a
+        type: String,
     }
 })
 
-const Provider = mongoose.model("Provider", providerModel);
+const Provider = mongoose.model("provider", providerModel);
 export default Provider;

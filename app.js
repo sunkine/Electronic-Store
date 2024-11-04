@@ -3,15 +3,18 @@ import dotenv from "dotenv";
 import cors from "cors";
 import bodyParser from "body-parser";
 import { queryParser } from "express-query-parser";
-import apiRoute  from './routes/api.route.js'
+import path from 'path';
 import cookieParser from "cookie-parser";
+import apiRoute from './routes/api.route.js';
 
 dotenv.config();
 const app = express();
 
+// Middleware để phục vụ các tệp tin tĩnh từ thư mục 'uploads'
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-app.use(cookieParser());
+app.use(cookieParser())
 // Enable CORS
 app.use(cors({
   origin: 'http://localhost:3001', // Hoặc dùng '*' nếu muốn cho phép mọi nguồn
@@ -28,6 +31,6 @@ app.use(
   })
 );
 
-app.use('/', apiRoute)
+app.use('/', apiRoute);
 
 export default app;
