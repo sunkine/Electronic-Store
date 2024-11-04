@@ -7,16 +7,6 @@ import { sendEmail, sendVerificationEmail } from "../utils/sendEmail.js";
 import generateAccessToken from "../utils/createToken.js";
 
 export const getAllAccount = async (req, res) => {
-  const _id = req.userAuthId;
-  const account = await Account.findById(_id);
-
-  if (!account) {
-    return res.status(200).json({
-      success: false,
-      message: "Account not found.",
-    });
-  }
-
   const page = parseInt(req.query.page);
   try {
     const account = await Account.find()
