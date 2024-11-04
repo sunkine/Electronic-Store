@@ -4,9 +4,6 @@ import { getAllProducts, createProduct, updateProductByID, deleteProductByID, ge
 import { isLoggedin } from "../middlewares/checkLogin.js";
 import isAdmin from "../middlewares/checkAdmin.js";
 import upload from '../middlewares/upload.js';
-import { isLoggedin } from "../middlewares/checkLogin.js";
-import isAdmin from "../middlewares/checkAdmin.js";
-
 
 const router = express.Router();
 
