@@ -94,8 +94,10 @@ export const getOrderById = async (req, res) => {
 
   try {
     const page = parseInt(req.query.page);
-    // Tìm các đơn hàng theo _id 
-    const orders = await Order.find({ idCustomer: _id }).limit(10).skip(page * 10);
+    // Tìm các đơn hàng theo _id
+    const orders = await Order.find({ idCustomer: _id })
+      .limit(10)
+      .skip(page * 10);
 
     if (!orders) {
       return res
@@ -153,4 +155,4 @@ export const updateOrder = async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
-}
+};
