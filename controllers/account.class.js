@@ -4,10 +4,19 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import asyncHandler from "express-async-handler";
 import { sendEmail, sendVerificationEmail } from "../utils/sendEmail.js";
-import generateAccessToken from "../utils/createToken.js"
-
+import generateAccessToken from "../utils/createToken.js";
 
 export const getAllAccount = async (req, res) => {
+  const _id = req.userAuthId;
+  const account = await Account.findById(_id);
+
+  if (!account) {
+    return res.status(200).json({
+      success: false,
+      message: "Account not found.",
+    });
+  }
+
   const page = parseInt(req.query.page);
   try {
     const account = await Account.find()
@@ -50,10 +59,10 @@ export const deleteAccount = async (req, res) => {
 
 export const updateAccount = async (req, res) => {
   try {
-    const _id = req.userAuthId;
+    const user = req.userAuthId;
 
     const updateData = { ...req.body };
-    const isRole = await Account.findById({ _id });
+    const isRole = await Account.findById(user);
 
     if (isRole.role !== "admin") {
       delete updateData.role;
@@ -70,7 +79,7 @@ export const updateAccount = async (req, res) => {
 
     // Cập nhật tài khoản
     const updatedAccount = await Account.findByIdAndUpdate(
-      _id,
+      user,
       {
         $set: updateData,
       },
@@ -96,15 +105,19 @@ export const updateAccount = async (req, res) => {
 
 export const getAccount = async (req, res) => {
   try {
-    const id = req.params.id;
-    const acc = await Account.findById(id);
-    if (!acc) {
-      res.status(404).json({ success: false, message: "Account not found." });
+    const _id = req.userAuthId;
+    const account = await Account.findById(_id);
+
+    if (!account) {
+      return res.status(200).json({
+        success: false,
+        message: "Account not found.",
+      });
     } else {
       res.status(200).json({
         success: true,
         message: "Successfully get account information.",
-        data: acc,
+        data: account,
       });
     }
   } catch (error) {
@@ -173,7 +186,7 @@ export const SignUp = asyncHandler(async (req, res) => {
       photo: "",
     });
 
-    if (!existingUsername && !existingEmail &&!existingPhone) {
+    if (!existingUsername && !existingEmail && !existingPhone) {
       const savedUser = await user.save();
       if (!savedUser) {
         return res
