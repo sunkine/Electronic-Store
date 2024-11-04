@@ -4,10 +4,19 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import asyncHandler from "express-async-handler";
 import { sendEmail, sendVerificationEmail } from "../utils/sendEmail.js";
-import generateAccessToken from "../utils/createToken.js"
-
+import generateAccessToken from "../utils/createToken.js";
 
 export const getAllAccount = async (req, res) => {
+  const _id = req.userAuthId;
+  const account = await Account.findById(_id);
+
+  if (!account) {
+    return res.status(200).json({
+      success: false,
+      message: "Account not found.",
+    });
+  }
+
   const page = parseInt(req.query.page);
   try {
     const account = await Account.find()
@@ -50,10 +59,10 @@ export const deleteAccount = async (req, res) => {
 
 export const updateAccount = async (req, res) => {
   try {
-    const _id = req.userAuthId;
+    const user = req.userAuthId;
 
     const updateData = { ...req.body };
-    const isRole = await Account.findById({ _id });
+    const isRole = await Account.findById({ user });
 
     if (isRole.role !== "admin") {
       delete updateData.role;
@@ -70,7 +79,7 @@ export const updateAccount = async (req, res) => {
 
     // Cập nhật tài khoản
     const updatedAccount = await Account.findByIdAndUpdate(
-      _id,
+      user._id,
       {
         $set: updateData,
       },
@@ -173,7 +182,7 @@ export const SignUp = asyncHandler(async (req, res) => {
       photo: "",
     });
 
-    if (!existingUsername && !existingEmail &&!existingPhone) {
+    if (!existingUsername && !existingEmail && !existingPhone) {
       const savedUser = await user.save();
       if (!savedUser) {
         return res
