@@ -14,6 +14,7 @@ export const createUser = async (req, res) => {
 };
 
 export const updateUser = async (req, res) => {
+  const _id = req.userAuthId;
   try {
     const account = await Account.findById(_id);
 

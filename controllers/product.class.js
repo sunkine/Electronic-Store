@@ -58,9 +58,6 @@ export const updateProductByID = async (req, res) => {
   }
 };
 
-
-
-
 export const deleteProductByID = async (req, res) => {
   try {
     const { id } = req.params; // Lấy id từ params
@@ -82,7 +79,6 @@ export const deleteProductByID = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-
 
 export const getAllProducts = async (req, res) => {
   const page = parseInt(req.query.page);
