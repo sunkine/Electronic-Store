@@ -14,7 +14,7 @@ import isAdmin from "../middlewares/checkAdmin.js";
 const router = express.Router();
 
 router.post("/sign-up", SignUp);
-router.get("/:id", getAccount);
+router.get("/information", isLoggedin, getAccount);
 router.get("/", isLoggedin, isAdmin, getAllAccount);
 router.delete("/:id", isLoggedin, isAdmin, deleteAccount);
 router.put("/", isLoggedin, updateAccount);

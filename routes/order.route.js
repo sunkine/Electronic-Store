@@ -11,7 +11,7 @@ import isAdmin from "../middlewares/checkAdmin.js";
 
 const router = express.Router();
 
-router.post("/", createOrder);
+router.post("/", isLoggedin, createOrder);
 router.get("/", isLoggedin, isAdmin, getAllOrder);
 router.get("/:id", isLoggedin, getOrderById);
 router.put("/:id", isLoggedin, isAdmin, updateOrder);
