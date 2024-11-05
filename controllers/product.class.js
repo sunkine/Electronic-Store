@@ -107,14 +107,14 @@ export const getAllProducts = async (req, res) => {
 export const getProduct = async (req, res) => {
   try {
     const id = req.params.id;
-    const acc = await Product.findById(id);
-    if (!acc) {
+    const product = await Product.findById(id);
+    if (!product) {
       res.status(404).json({ success: false, message: "Product not found." });
     } else {
       res.status(200).json({
         success: true,
         message: "Successfully get product information.",
-        data: acc,
+        data: product,
       });
     }
   } catch (error) {
@@ -123,11 +123,11 @@ export const getProduct = async (req, res) => {
 };
 
 export const listProductSearch = async (req, res) => {
-  const { name, idTypeProduct } = req.query;
+  const { name, typeProduct } = req.query;
   let filters = {};
 
   if (name) filters.name = { $regex: name, $options: "i" };
-  if (idTypeProduct) filters.idTypeProduct = { $regex: idTypeProduct, $options: "i" };
+  if (typeProduct) filters.typeProduct = { $regex: typeProduct, $options: "i" };
 
   try {
     const products = await Product.find(filters);

@@ -18,12 +18,15 @@ const productsModel = new mongoose.Schema({
         type: Number,
         required: true,
     },
-    idTypeProduct: {
+    typeProduct: {
         type: String,
         required: true,
     }, 
     image: {
         type: String,
+    },
+    description: {
+        type: String
     },
     status: {
         type: String,
