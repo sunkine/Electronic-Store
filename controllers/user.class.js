@@ -24,10 +24,27 @@ export const updateUser = async (req, res) => {
         message: "Account not found.",
       });
     }
-
+   
     const { email } = account;
     const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
     
+    if (req.body.phone) {
+      const existingUserWithPhone = await User.findOne({ phone: req.body.phone, _id: { $ne: user._id } });
+      if (existingUserWithPhone) {
+        return res.status(400).json({
+          success: false,
+          message: "Phone number is already in use.",
+        });
+      }
+    }
+
     const idUserUpdated = await User.findByIdAndUpdate(
       user._id,
       {

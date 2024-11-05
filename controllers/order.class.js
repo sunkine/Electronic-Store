@@ -44,8 +44,10 @@ export const createOrder = async (req, res) => {
     // Lưu đơn hàng vào cơ sở dữ liệu
     await order.save();
 
-    // Làm trống giỏ hàng sau khi tạo đơn hàng thành công
-    cart.products = [];
+    // Xóa các sản phẩm được mua ra khỏi giỏ hàng
+    cart.products = cart.products.filter(
+      (item) => !order.products.some((purchasedItem) => purchasedItem.idProduct.equals(item.idProduct))
+    );
     cart.isOrder = false;
     await cart.save();
 
@@ -57,6 +59,7 @@ export const createOrder = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
 
 export const getAllOrder = async (req, res) => {
   const page = parseInt(req.query.page);
