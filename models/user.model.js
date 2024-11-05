@@ -13,11 +13,13 @@ const userSchema = new mongoose.Schema(
     gender: {
       type: String,
       enum: ["Male", "Female"],
+      default: "Male"
     },
     phone: {
       type: String,
       required: true,
       unique: true,
+      default: "",
     },
     email: {
       type: String,
@@ -27,6 +29,7 @@ const userSchema = new mongoose.Schema(
     address: {
       type: String,
       required: true,
+      default: "",
     },
     photo: {
       type: String,

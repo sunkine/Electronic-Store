@@ -7,16 +7,6 @@ import { sendEmail, sendVerificationEmail } from "../utils/sendEmail.js";
 import generateAccessToken from "../utils/createToken.js";
 
 export const getAllAccount = async (req, res) => {
-  const _id = req.userAuthId;
-  const account = await Account.findById(_id);
-
-  if (!account) {
-    return res.status(200).json({
-      success: false,
-      message: "Account not found.",
-    });
-  }
-
   const page = parseInt(req.query.page);
   try {
     const account = await Account.find()
@@ -140,7 +130,7 @@ export const SignUp = asyncHandler(async (req, res) => {
     if (existingUsername) {
       return res
         .status(400)
-        .json({ success: false, message: "Email is already registered." });
+        .json({ success: false, message: "Username is already registered." });
     }
 
     // Check if the user already exists
@@ -166,27 +156,26 @@ export const SignUp = asyncHandler(async (req, res) => {
         .json({ success: false, message: "Phone is already registered." });
     }
 
-    // Save the account to the database
-    const savedAccount = await account.save();
-
-    // Check if the account was successfully created
-    if (!savedAccount) {
-      return res
-        .status(500)
-        .json({ success: false, message: "Account creation failed." });
-    }
-
-    const user = new User({
-      email,
-      idAccount: savedAccount._id, // liên kết với account vừa tạo
-      name: req.body.name,
-      gender: req.body.gender,
-      phone: req.body.phone,
-      address: req.body.address,
-      photo: "",
-    });
-
     if (!existingUsername && !existingEmail && !existingPhone) {
+      const savedAccount = await account.save();
+      // Check if the account was successfully created
+      if (!savedAccount) {
+        return res
+          .status(500)
+          .json({ success: false, message: "Account creation failed." });
+      }
+
+      // Save the account to the database
+
+      const user = new User({
+        email,
+        idAccount: savedAccount._id, // liên kết với account vừa tạo
+        name: savedAccount.username,
+        gender: "",
+        phone: "",
+        address: "",
+        photo: "",
+      });
       const savedUser = await user.save();
       if (!savedUser) {
         return res
@@ -197,7 +186,7 @@ export const SignUp = asyncHandler(async (req, res) => {
       // Generate a verification token
       const verificationToken = jwt.sign(
         { userAuthId: savedAccount._id },
-        process.env.JWT_SECRET,
+        process.env.JWT_ACCESS_SECRET,
         {
           expiresIn: "1h",
         }

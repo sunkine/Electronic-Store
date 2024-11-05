@@ -22,3 +22,4 @@ router.delete('/:id', deleteWarehouseItemByID);
 router.post('/search', listWarehouseItemSearch);
 
 export default router;
+

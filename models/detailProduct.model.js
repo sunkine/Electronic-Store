@@ -2,9 +2,8 @@ import mongoose from "../config/mongoose.js"
 
 const productsModel = new mongoose.Schema({
     idProduct: {
-        type: String,
-        required: true,
-        unique: true,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Product",
     },
     nameOfProduct: {
         type: String,
@@ -18,16 +17,10 @@ const productsModel = new mongoose.Schema({
         type: Number,
         required: true,
     },
-    typeProduct: {
+    idTypeProduct: {
         type: String,
         required: true,
     }, 
-    image: {
-        type: String,
-    },
-    description: {
-        type: String
-    },
     status: {
         type: String,
         emum: ["Available", "Not availale"],
