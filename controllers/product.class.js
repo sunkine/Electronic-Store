@@ -1,4 +1,5 @@
 import Product from "../models/product.model.js";
+import detailProduct from "../models/detailProduct.model.js";
 
 export const createProduct = async (req, res) => {
   try {
@@ -11,7 +12,21 @@ export const createProduct = async (req, res) => {
       image: imagePath, // Lưu đường dẫn hình ảnh vào cơ sở dữ liệu
     });
 
-    await newProduct.save(); // Lưu sản phẩm mới vào cơ sở dữ liệu
+    // Lưu sản phẩm mới vào cơ sở dữ liệu
+    await newProduct.save(); 
+
+    // Tạo chi tiết sản phẩm mới
+    const newDetailProduct = new detailProduct({
+      idProduct: newProduct._id, // Liên kết với sản phẩm vừa tạo
+      description: productData.detailDescription, // Mô tả chi tiết
+    });
+
+    // Lưu chi tiết sản phẩm vào cơ sở dữ liệu
+    await newDetailProduct.save();
+
+    // Cập nhật lại sản phẩm để liên kết chi tiết
+    newProduct.detail = newDetailProduct._id;
+    await newProduct.save(); // Lưu lại sản phẩm với thông tin chi tiết
 
     res.status(201).json({
       success: true,
@@ -22,6 +37,7 @@ export const createProduct = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 export const updateProductByID = async (req, res) => {
   try {
@@ -107,20 +123,23 @@ export const getAllProducts = async (req, res) => {
 export const getProduct = async (req, res) => {
   try {
     const id = req.params.id;
-    const acc = await Product.findById(id);
-    if (!acc) {
+    // Tìm sản phẩm theo id và populate trường detail
+    const product = await Product.findById(id).populate('detail');
+
+    if (!product) {
       res.status(404).json({ success: false, message: "Product not found." });
     } else {
       res.status(200).json({
         success: true,
         message: "Successfully get product information.",
-        data: acc,
+        data: product,
       });
     }
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 export const listProductSearch = async (req, res) => {
   const { name, idTypeProduct } = req.query;

@@ -7,6 +7,7 @@ import UserRouter from "./user.route.js";
 import CartRoute from "./cart.route.js";
 import OrderRoute from "./order.route.js";
 import ProviderRouter from "./provider.route.js";
+import DetailProduct from "./detailProduct.route.js"
 
 const app = express();
 
@@ -17,5 +18,6 @@ app.use("/auth", AuthRouter);
 app.use("/cart", CartRoute);
 app.use("/order", OrderRoute);
 app.use("/provider", ProviderRouter);
+app.use("/detail", DetailProduct)
 
 export default app;
