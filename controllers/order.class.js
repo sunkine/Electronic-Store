@@ -25,7 +25,6 @@ export const createOrder = async (req, res) => {
       (sum, item) => sum + item.price * item.quantity,
       0
     );
-
     // Tạo đơn hàng mới
     const order = new Order({
       idCustomer: userId,
@@ -44,10 +43,12 @@ export const createOrder = async (req, res) => {
     // Lưu đơn hàng vào cơ sở dữ liệu
     await order.save();
 
-    // Xóa các sản phẩm được mua ra khỏi giỏ hàng
+    // Lọc ra các sản phẩm đã mua khỏi giỏ hàng
+    const purchasedProductIds = cart.products.map((item) => item.idProduct._id);
     cart.products = cart.products.filter(
-      (item) => !order.products.some((purchasedItem) => purchasedItem.idProduct.equals(item.idProduct))
+      (item) => !purchasedProductIds.includes(item.idProduct._id)
     );
+    // cart.products = []
     cart.isOrder = false;
     await cart.save();
 
@@ -56,10 +57,9 @@ export const createOrder = async (req, res) => {
       .json({ success: true, message: "Order created successfully", order });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: "Server error" });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
-
 
 export const getAllOrder = async (req, res) => {
   const page = parseInt(req.query.page);
@@ -97,8 +97,10 @@ export const getOrderById = async (req, res) => {
 
   try {
     const page = parseInt(req.query.page);
-    // Tìm các đơn hàng theo _id 
-    const orders = await Order.find({ idCustomer: _id }).limit(10).skip(page * 10);
+    // Tìm các đơn hàng theo _id
+    const orders = await Order.find({ idCustomer: _id })
+      .limit(10)
+      .skip(page * 10);
 
     if (!orders) {
       return res
@@ -156,4 +158,4 @@ export const updateOrder = async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
-}
+};
