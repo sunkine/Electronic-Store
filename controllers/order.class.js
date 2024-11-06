@@ -25,7 +25,6 @@ export const createOrder = async (req, res) => {
       (sum, item) => sum + item.price * item.quantity,
       0
     );
-
     // Tạo đơn hàng mới
     const order = new Order({
       idCustomer: userId,
@@ -44,8 +43,12 @@ export const createOrder = async (req, res) => {
     // Lưu đơn hàng vào cơ sở dữ liệu
     await order.save();
 
-    // Làm trống giỏ hàng sau khi tạo đơn hàng thành công
-    cart.products = [];
+    // Lọc ra các sản phẩm đã mua khỏi giỏ hàng
+    const purchasedProductIds = cart.products.map((item) => item.idProduct._id);
+    cart.products = cart.products.filter(
+      (item) => !purchasedProductIds.includes(item.idProduct._id)
+    );
+    // cart.products = []
     cart.isOrder = false;
     await cart.save();
 
@@ -54,7 +57,7 @@ export const createOrder = async (req, res) => {
       .json({ success: true, message: "Order created successfully", order });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: "Server error" });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -87,7 +90,6 @@ export const getOrderById = async (req, res) => {
 
   try {
     const account = await Account.findById(accountId); // Tìm tài khoản theo ID
-
     if (!account) {
       return res.status(404).json({ success: false, message: "Account not found." });
     }

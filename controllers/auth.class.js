@@ -33,7 +33,7 @@ export const SignIn = async (req, res) => {
     if (!account.isActive) {
       return res.status(401).json({
         success: false,
-        message: "Please verify your email to activate your account.",
+        message: "Your account have been disable. Please contact the administrator to active your account.",
       });
     }
 

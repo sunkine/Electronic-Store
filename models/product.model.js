@@ -27,7 +27,7 @@ const productsModel = new mongoose.Schema({
   },
   status: {
     type: String,
-    emum: ["Available", "Not availale"],
+    enum: ["Available", "Not available"],
   },
   description: {
     type: String,

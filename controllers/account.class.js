@@ -29,6 +29,24 @@ export const getAllAccount = async (req, res) => {
   }
 };
 
+export const disableAccount = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const account = await Account.findByIdAndUpdate({_id: id}, {isActive: false}, {new: true});
+    if (!account) {
+      res.status(404).json({ success: false, message: "Account not found." });
+    } else {
+      res.status(200).json({
+        success: true,
+        message: "Successfully disable account.",
+        data: account,
+      });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 export const deleteAccount = async (req, res) => {
   try {
     const id = req.params.id;
@@ -49,16 +67,28 @@ export const deleteAccount = async (req, res) => {
 
 export const updateAccount = async (req, res) => {
   try {
+    const id = req.params.id;
     const user = req.userAuthId;
-
     const updateData = { ...req.body };
-    const isRole = await Account.findById(user);
+    const currentUser = await Account.findById(user);
 
-    if (isRole.role !== "admin") {
+    // Kiểm tra nếu người dùng hiện tại không phải là admin và không phải tài khoản chính họ
+    if (user !== id && currentUser.role !== "admin") {
+      return res.status(403).json({ success: false, message: "Permission denied." });
+    }
+
+    // Nếu không phải admin, không cho phép cập nhật role
+    if (currentUser.role !== "admin") {
       delete updateData.role;
-      return res
-        .status(404)
-        .json({ success: false, message: "Cannot updated role, admin only." });
+    }
+
+    if (updateData.username) { 
+      const existingUsername = await Account.findOne({ username: updateData.username, _id: { $ne: id }});
+      if (existingUsername) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Username is already in use." });
+      }
     }
 
     if (req.body.password) {
@@ -69,7 +99,7 @@ export const updateAccount = async (req, res) => {
 
     // Cập nhật tài khoản
     const updatedAccount = await Account.findByIdAndUpdate(
-      user,
+      id,
       {
         $set: updateData,
       },
@@ -132,8 +162,6 @@ export const SignUp = asyncHandler(async (req, res) => {
         .status(400)
         .json({ success: false, message: "Username is already registered." });
     }
-
-    // Check if the user already exists
     const existingEmail = await Account.findOne({ email });
     if (existingEmail) {
       return res
@@ -148,32 +176,25 @@ export const SignUp = asyncHandler(async (req, res) => {
       password: bcrypt.hashSync(password, 10), // hash the password
       isActive: false, // set account as not verified
     });
-
-    const existingPhone = await User.findOne({ phone });
-    if (existingPhone) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Phone is already registered." });
-    }
-
-    if (!existingUsername && !existingEmail && !existingPhone) {
+  
+    if (!existingUsername && !existingEmail) {
+      // Save the account to the database
       const savedAccount = await account.save();
+      
       // Check if the account was successfully created
       if (!savedAccount) {
         return res
-          .status(500)
-          .json({ success: false, message: "Account creation failed." });
+        .status(500)
+        .json({ success: false, message: "Account creation failed." });
       }
-
-      // Save the account to the database
 
       const user = new User({
         email,
         idAccount: savedAccount._id, // liên kết với account vừa tạo
-        name: savedAccount.username,
-        gender: "",
-        phone: "",
-        address: "",
+        name: "Nguyen Van A",
+        gender: "Male",
+        phone: "0123456789",
+        address: "HCM",
         photo: "",
       });
       const savedUser = await user.save();
@@ -224,7 +245,7 @@ export const forgotPasswordCtrl = asyncHandler(async (req, res) => {
   // Create a JWT token for password reset
   const resetToken = jwt.sign(
     { resetToken: user._id },
-    process.env.JWT_SECRET, // You can use a separate secret for password reset if needed
+    process.env.JWT_ACCESS_SECRET, // You can use a separate secret for password reset if needed
     { expiresIn: "10m" } // Token will expire in 10 minutes
   );
 

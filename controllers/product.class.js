@@ -140,7 +140,6 @@ export const getProduct = async (req, res) => {
   }
 };
 
-
 export const listProductSearch = async (req, res) => {
   const { name, typeProduct } = req.query;
   let filters = {};
