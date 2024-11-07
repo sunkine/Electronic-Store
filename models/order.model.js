@@ -26,7 +26,6 @@ const orderModel = new mongoose.Schema({
     },
     totalPrice: {
         type: Number,
-
     },
     payment_method: {
         type: String,
