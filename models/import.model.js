@@ -1,6 +1,11 @@
 import mongoose from "../config/mongoose.js";
 
-const wareouseModel = new mongoose.Schema({
+const importModel = new mongoose.Schema({
+  idImport: {
+    type: String,
+    required: true,
+    unique: true,
+  },
   idProduct: {
     type: String,
     required: true,
@@ -15,10 +20,18 @@ const wareouseModel = new mongoose.Schema({
     required: true,
     min: 0,
   },
+  priceImport: {
+    type: Number,
+    required: false,
+    min: 0,
+  },
+  dateImport: {
+    type: Date,
+    default: Date.now,
+},
   idProvider: {
     type: String,
     required: true,
-    unique: true,
   },
   nameOfProvider: {
     type: String,
@@ -26,5 +39,5 @@ const wareouseModel = new mongoose.Schema({
   },
 });
 
-const Warehouse = mongoose.model("Warehouse", wareouseModel);
-export default Warehouse;
+const Import = mongoose.model("Import", importModel);
+export default Import;

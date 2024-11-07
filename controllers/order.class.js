@@ -85,29 +85,32 @@ export const getAllOrder = async (req, res) => {
 };
 
 export const getOrderById = async (req, res) => {
-  const accountId = req.userAuthId; // Lấy ID tài khoản từ middleware xác thực
-  const orderId = req.params.id; // Lấy ID đơn hàng từ URL params
-
   try {
-    const account = await Account.findById(accountId); // Tìm tài khoản theo ID
-    if (!account) {
-      return res.status(404).json({ success: false, message: "Account not found." });
-    }
-
-    // Nếu có orderId thì tìm theo ID đơn hàng, nếu không thì tìm theo idCustomer
+    const orderId = req.params.id; // Lấy ID từ URL params
     if (orderId) {
-      const order = await Order.findById(orderId); // Tìm đơn hàng theo ID
+      // Nếu có orderId trong URL params, tìm đơn hàng theo ID
+      const order = await Order.findById(orderId);
+
       if (!order) {
         return res.status(404).json({ success: false, message: "Order not found" });
       }
+
       return res.status(200).json({ success: true, data: order }); // Trả về đơn hàng tìm được
     } else {
-      const page = parseInt(req.query.page) || 0; // Lấy số trang từ query, mặc định là 0
-      const orders = await Order.find({ idCustomer: accountId }) // Tìm các đơn hàng theo idCustomer
+      // Nếu không có orderId, lấy đơn hàng của người dùng đang đăng nhập
+      const _id = req.userAuthId;
+      const account = await Account.findById(_id);
+
+      if (!account) {
+        return res.status(404).json({ success: false, message: "Account not found" });
+      }
+
+      const page = parseInt(req.query.page) || 0; // Default to page 0 if not specified
+      const orders = await Order.find({ idCustomer: _id })
         .limit(10)
         .skip(page * 10);
 
-      if (!orders.length) {
+      if (!orders || orders.length === 0) {
         return res.status(404).json({ success: false, message: "No orders found" });
       }
 
@@ -115,10 +118,9 @@ export const getOrderById = async (req, res) => {
     }
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ success: false, message: "Server error" });
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
-
 
 
 export const deleteOrder = async (req, res) => {
