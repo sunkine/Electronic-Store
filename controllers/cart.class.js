@@ -23,13 +23,13 @@ export const addToCart = async (req, res) => {
         .json({ success: false, message: "Product not found" });
     }
 
-    const { nameOfProduct, price } = product;
+    const { nameOfProduct, price, } = product;
 
     let cart = await Cart.findOne({ userId });
     if (!cart) {
       cart = new Cart({
         userId,
-        products: [{ _id, quantity, nameOfProduct, price }],
+        products: [{ idProduct, quantity, nameOfProduct, price }],
       });
     } else {
       const itemIndex = cart.products.findIndex(
@@ -38,7 +38,7 @@ export const addToCart = async (req, res) => {
       if (itemIndex > -1) {
         cart.products[itemIndex].quantity += quantity;
       } else {
-        cart.products.push({ _id, quantity, nameOfProduct, price });
+        cart.products.push({ idProduct, quantity, nameOfProduct, price });
       }
     }
 

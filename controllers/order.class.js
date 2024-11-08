@@ -176,7 +176,7 @@ export const payment = async (req, res) => {
   const order = {
     app_id: configPayment.app_id,
     app_trans_id: `${moment().format("YYMMDD")}_${transID}`, // translation missing: vi.docs.shared.sample_code.comments.app_trans_id
-    app_user: orderInfo.idCustomer,
+    app_user: orderInfo._id,
     app_time: Date.now(),
     phone: orderInfo.phone,
     address: orderInfo.address, // miliseconds
@@ -186,7 +186,7 @@ export const payment = async (req, res) => {
     description: `Payment for the order #${transID}`,
     bank_code: "",
     callback_url:
-      "https://8837-2402-800-62a6-f9c3-482f-1129-f866-c9d5.ngrok-free.app/order/callback",
+      "https://c6c7-2402-800-62a6-f9c3-482f-1129-f866-c9d5.ngrok-free.app/order/callback",
   };
 
   // appid|app_trans_id|appuser|amount|apptime|embeddata|item
@@ -238,7 +238,7 @@ export const callback = async (req, res) => {
       let dataJson = JSON.parse(dataStr, configPayment.key2);
 
       await Order.findOneAndUpdate(
-        { idCustomer: dataJson["app_user"] },
+        { _id: dataJson["app_user"] },
         { status: "Thanh toán thành công" }
       );
       console.log(
