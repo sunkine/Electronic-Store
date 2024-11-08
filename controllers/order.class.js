@@ -186,7 +186,7 @@ export const payment = async (req, res) => {
     description: `Payment for the order #${transID}`,
     bank_code: "",
     callback_url:
-      "https://c6c7-2402-800-62a6-f9c3-482f-1129-f866-c9d5.ngrok-free.app/order/callback",
+      "https://a9fc-123-21-70-138.ngrok-free.app/order/callback",
   };
 
   // appid|app_trans_id|appuser|amount|apptime|embeddata|item

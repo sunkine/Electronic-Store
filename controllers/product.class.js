@@ -141,11 +141,11 @@ export const getProduct = async (req, res) => {
 };
 
 export const listProductSearch = async (req, res) => {
-  const { name, idTypeProduct } = req.query;
+  const { nameOfProduct, typeProduct } = req.query;
   let filters = {};
 
-  if (name) filters.name = { $regex: name, $options: "i" };
-  if (idTypeProduct) filters.idTypeProduct = { $regex: idTypeProduct, $options: "i" };
+  if (nameOfProduct) filters.nameOfProduct = { $regex: nameOfProduct, $options: "i" };
+  if (typeProduct) filters.typeProduct = { $regex: typeProduct, $options: "i" };
 
   try {
     const products = await Product.find(filters);
