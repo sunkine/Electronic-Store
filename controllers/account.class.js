@@ -7,16 +7,6 @@ import { sendEmail, sendVerificationEmail } from "../utils/sendEmail.js";
 import generateAccessToken from "../utils/createToken.js";
 
 export const getAllAccount = async (req, res) => {
-  const _id = req.userAuthId;
-  const account = await Account.findById(_id);
-
-  if (!account) {
-    return res.status(200).json({
-      success: false,
-      message: "Account not found.",
-    });
-  }
-
   const page = parseInt(req.query.page);
   try {
     const account = await Account.find()
@@ -42,7 +32,11 @@ export const getAllAccount = async (req, res) => {
 export const disableAccount = async (req, res) => {
   try {
     const id = req.params.id;
-    const account = await Account.findByIdAndUpdate({_id: id}, {isActive: false}, {new: true});
+    const account = await Account.findByIdAndUpdate(
+      { _id: id },
+      { isActive: false },
+      { new: true }
+    );
     if (!account) {
       res.status(404).json({ success: false, message: "Account not found." });
     } else {
@@ -60,16 +54,24 @@ export const disableAccount = async (req, res) => {
 export const deleteAccount = async (req, res) => {
   try {
     const id = req.params.id;
-    const acc = await Account.findByIdAndDelete(id);
-    if (!acc) {
+    const account = await Account.findByIdAndDelete(id);
+    const user = await User.findOneAndDelete({idAccount: id});
+    if (!account) {
       res.status(404).json({ success: false, message: "Account not found." });
-    } else {
-      res.status(200).json({
-        success: true,
-        message: "Successfully delete account.",
-        data: acc,
-      });
     }
+
+    if (!user) {
+      res
+        .status(404)
+        .json({ success: false, message: "User with this account not found." });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Successfully delete account and user.",
+      dataAccount: account,
+      dataUser: user,
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -84,7 +86,9 @@ export const updateAccount = async (req, res) => {
 
     // Kiểm tra nếu người dùng hiện tại không phải là admin và không phải tài khoản chính họ
     if (user !== id && currentUser.role !== "admin") {
-      return res.status(403).json({ success: false, message: "Permission denied." });
+      return res
+        .status(403)
+        .json({ success: false, message: "Permission denied." });
     }
 
     // Nếu không phải admin, không cho phép cập nhật role
@@ -92,8 +96,11 @@ export const updateAccount = async (req, res) => {
       delete updateData.role;
     }
 
-    if (updateData.username) { 
-      const existingUsername = await Account.findOne({ username: updateData.username, _id: { $ne: id }});
+    if (updateData.username) {
+      const existingUsername = await Account.findOne({
+        username: updateData.username,
+        _id: { $ne: id },
+      });
       if (existingUsername) {
         return res
           .status(400)
@@ -156,7 +163,7 @@ export const getAccount = async (req, res) => {
 };
 
 export const SignUp = asyncHandler(async (req, res) => {
-  const { username, email, password, phone } = req.body;
+  const { username, email, password} = req.body;
 
   // Make sure both email and password are provided
   if (!email || !password) {
@@ -186,16 +193,16 @@ export const SignUp = asyncHandler(async (req, res) => {
       password: bcrypt.hashSync(password, 10), // hash the password
       isActive: false, // set account as not verified
     });
-    
+
     if (!existingUsername && !existingEmail) {
       // Save the account to the database
       const savedAccount = await account.save();
-      
+
       // Check if the account was successfully created
       if (!savedAccount) {
         return res
-        .status(500)
-        .json({ success: false, message: "Account creation failed." });
+          .status(500)
+          .json({ success: false, message: "Account creation failed." });
       }
 
       const user = new User({
@@ -290,7 +297,7 @@ export const resetPasswordCtrl = asyncHandler(async (req, res) => {
 
   try {
     // Verify the token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
 
     // Find the associated account using the user's email
     const account = await Account.findById(decoded.resetToken);

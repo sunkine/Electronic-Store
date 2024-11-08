@@ -78,7 +78,8 @@ export const deleteProductByID = async (req, res) => {
   try {
     const { id } = req.params; // Lấy id từ params
     const deletedProduct = await Product.findOneAndDelete({ idProduct: id }); // Xóa sản phẩm theo idProduct
-
+    const deleteDetailProduct = await detailProduct.findOneAndDelete({idProduct: id}) //Xóa detail product theo id Product
+  
     if (!deletedProduct) {
       return res.status(404).json({
         success: false,
@@ -86,10 +87,18 @@ export const deleteProductByID = async (req, res) => {
       });
     }
 
+    if (!deleteDetailProduct) {
+      return res.status(404).json({
+        success: false,
+        message: "Detail product of product not found.",
+      });
+    }
+
     res.status(200).json({
       success: true,
       message: "Product deleted successfully.",
-      data: deletedProduct,
+      dataProduct: deletedProduct,
+      dataDetail: deleteDetailProduct,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -97,10 +106,11 @@ export const deleteProductByID = async (req, res) => {
 };
 
 export const getAllProducts = async (req, res) => {
+  const query = req.query || {};
   const page = parseInt(req.query.page);
   try {
     const product = await Product
-      .find({})
+      .find(query)
       .limit(10)
       .skip(page * 10);
     if (!product) {
