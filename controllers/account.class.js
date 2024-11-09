@@ -176,6 +176,7 @@ export const SignUp = asyncHandler(async (req, res) => {
       isActive: false, // set account as not verified
     });
 
+
     // Save the account to the database
     const savedAccount = await account.save();
 
@@ -214,6 +215,7 @@ export const SignUp = asyncHandler(async (req, res) => {
         .status(500)
         .json({ success: false, message: "Cart creation failed." });
     }
+
 
     // Generate a verification token
     const verificationToken = jwt.sign(
