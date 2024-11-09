@@ -1,7 +1,6 @@
 import express from "express";
 import {
   addToCart,
-  clearCart,
   deleteFromCart,
   getAllCart,
   getCartById,
@@ -10,10 +9,9 @@ import { isLoggedin } from "../middlewares/checkLogin.js";
 
 const router = express.Router();
 
+router.get("/", getAllCart);
 router.post("/", isLoggedin, addToCart);
-router.post("/clear", isLoggedin, clearCart);
-router.delete("/", isLoggedin, deleteFromCart);
-router.get("/all", getAllCart);
-router.get("/", isLoggedin, getCartById);
+router.get("/:id", isLoggedin, getCartById);
+router.delete("/:id", isLoggedin, deleteFromCart);
 
 export default router;

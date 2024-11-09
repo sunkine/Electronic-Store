@@ -23,9 +23,9 @@ export const addToCart = async (req, res) => {
         .json({ success: false, message: "Product not found" });
     }
 
-    const { nameOfProduct, price, } = product;
+    const { nameOfProduct, price } = product;
 
-    let cart = await Cart.findOne({ userId });
+    let cart = await Cart.findOne({ idAccount: userId });
     if (!cart) {
       cart = new Cart({
         userId,
@@ -50,6 +50,23 @@ export const addToCart = async (req, res) => {
   }
 };
 
+export const deleteCart = async (req, res) => {
+  const { id } = req.params;
+  const cart = await Cart.findByIdAndDelete(id);
+
+  if (!cart) {
+    return res.status(404).json({ success: false, message: "Cart not found" });
+  } else {
+    return res
+      .status(200)
+      .json({
+        success: true,
+        message: "Deleting cart successfully",
+        data: cart,
+      });
+  }
+};
+
 export const deleteFromCart = async (req, res) => {
   const { idProduct } = req.body;
 
@@ -64,7 +81,8 @@ export const deleteFromCart = async (req, res) => {
   }
 
   try {
-    let cart = await Cart.findOne({ userId });
+    const {id} = req.params;
+    let cart = await Cart.findOne({ idAccount: id });
     if (!cart) {
       return res
         .status(404)
@@ -78,13 +96,11 @@ export const deleteFromCart = async (req, res) => {
     if (productIndex > -1) {
       cart.products.splice(productIndex, 1);
       await cart.save();
-      return res
-        .status(200)
-        .json({
-          success: true,
-          message: "Product removed from cart",
-          data: cart,
-        });
+      return res.status(200).json({
+        success: true,
+        message: "Product removed from cart",
+        data: cart,
+      });
     } else {
       return res
         .status(404)
@@ -131,9 +147,8 @@ export const getCartById = async (req, res) => {
   }
 
   try {
-
-    const cart = await Cart.findOne({ userId: _id });
-
+    const { id } = req.params;
+    const cart = await Cart.findOne({ idAccount: id });
     if (!cart) {
       return res
         .status(404)
@@ -148,7 +163,7 @@ export const getCartById = async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
-}
+};
 
 export const clearCart = async (req, res) => {
   const _id = req.userAuthId;
@@ -171,7 +186,9 @@ export const clearCart = async (req, res) => {
     }
 
     if (cart.products.length === 0) {
-      return res.status(401).json({ success: false, message: "Cart already empty" });
+      return res
+        .status(401)
+        .json({ success: false, message: "Cart already empty" });
     }
 
     // Làm trống giỏ hàng

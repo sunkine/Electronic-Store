@@ -106,7 +106,11 @@ export const deleteProductByID = async (req, res) => {
 };
 
 export const getAllProducts = async (req, res) => {
-  const query = req.query || {};
+  const { nameOfProduct, typeProduct } = req.query;
+  let query = {};
+
+  if (nameOfProduct) query.nameOfProduct = { $regex: nameOfProduct, $options: "i" };
+  if (typeProduct) query.typeProduct = { $regex: typeProduct, $options: "i" };
   const page = parseInt(req.query.page);
   try {
     const product = await Product
@@ -149,24 +153,3 @@ export const getProduct = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-
-export const listProductSearch = async (req, res) => {
-  const { nameOfProduct, typeProduct } = req.query;
-  let filters = {};
-
-  if (nameOfProduct) filters.nameOfProduct = { $regex: nameOfProduct, $options: "i" };
-  if (typeProduct) filters.typeProduct = { $regex: typeProduct, $options: "i" };
-
-  try {
-    const products = await Product.find(filters);
-    res.status(200).json({
-      success: true,
-      message: "Successfully search item.",
-      total: products.length,
-      data: products,
-    });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-

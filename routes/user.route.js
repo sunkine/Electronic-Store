@@ -10,13 +10,10 @@ import isAdmin from "../middlewares/checkAdmin.js";
 
 const router = express.Router();
 
-//get all user
 router.get("/", isLoggedin, isAdmin, getAllUser);
-//get one user
-router.get("/information", isLoggedin, getOneUser);
-//update a user
+router.get("/:id", isLoggedin, getOneUser);
 router.put("/", isLoggedin, updateUser);
-//delete a user
 router.delete("/:id", isLoggedin, isAdmin, deleteUser);
+
 
 export default router;

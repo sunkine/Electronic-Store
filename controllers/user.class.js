@@ -113,6 +113,8 @@ export const getAllUser = async (req, res) => {
 export const getOneUser = async (req, res) => {
   try {
     const _id = req.userAuthId;
+    const {id} = req.params;
+
     const account = await Account.findById(_id);
 
     if (!account) {
@@ -122,8 +124,7 @@ export const getOneUser = async (req, res) => {
       });
     }
 
-    const { email } = account;
-    const user = await User.findOne({ email });
+    const user = await User.findById(id);
 
     if (!user) {
       return res

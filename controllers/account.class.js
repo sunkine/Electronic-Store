@@ -1,10 +1,11 @@
 import Account from "../models/account.model.js";
 import User from "../models/user.model.js";
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import Cart from "../models/cart.model.js";
 import asyncHandler from "express-async-handler";
 import { sendEmail, sendVerificationEmail } from "../utils/sendEmail.js";
 import generateAccessToken from "../utils/createToken.js";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 export const getAllAccount = async (req, res) => {
   const page = parseInt(req.query.page);
@@ -55,7 +56,7 @@ export const deleteAccount = async (req, res) => {
   try {
     const id = req.params.id;
     const account = await Account.findByIdAndDelete(id);
-    const user = await User.findOneAndDelete({idAccount: id});
+    const user = await User.findOneAndDelete({ idAccount: id });
     if (!account) {
       res.status(404).json({ success: false, message: "Account not found." });
     }
@@ -144,27 +145,27 @@ export const getAccount = async (req, res) => {
   try {
     const _id = req.userAuthId;
     const account = await Account.findById(_id);
+    const { id } = req.params;
 
     if (!account) {
       return res.status(200).json({
         success: false,
         message: "Account not found.",
       });
-    } else {
-      res.status(200).json({
-        success: true,
-        message: "Successfully get account information.",
-        data: account,
-      });
     }
+
+    res.status(200).json({
+      success: true,
+      message: "Successfully get account information.",
+      data: account,
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
 export const SignUp = asyncHandler(async (req, res) => {
-  const { username, email, password} = req.body;
-
+  const { username, email, password } = req.body;
   // Make sure both email and password are provided
   if (!email || !password) {
     return res
@@ -173,19 +174,12 @@ export const SignUp = asyncHandler(async (req, res) => {
   }
 
   try {
-    const existingUsername = await Account.findOne({ username });
-    if (existingUsername) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Username is already registered." });
-    }
     const existingEmail = await Account.findOne({ email });
     if (existingEmail) {
       return res
         .status(400)
         .json({ success: false, message: "Email is already registered." });
     }
-
     // Create a new account
     const account = new Account({
       username,
@@ -194,56 +188,67 @@ export const SignUp = asyncHandler(async (req, res) => {
       isActive: false, // set account as not verified
     });
 
-    if (!existingUsername && !existingEmail) {
-      // Save the account to the database
-      const savedAccount = await account.save();
+    // Save the account to the database
+    const savedAccount = await account.save();
 
-      // Check if the account was successfully created
-      if (!savedAccount) {
-        return res
-          .status(500)
-          .json({ success: false, message: "Account creation failed." });
-      }
-
-      const user = new User({
-        email,
-        idAccount: savedAccount._id, // liên kết với account vừa tạo
-        name: "Nguyen Van A",
-        gender: "Male",
-        phone: "0123456789",
-        address: "HCM",
-        photo: "",
-      });
-      const savedUser = await user.save();
-      if (!savedUser) {
-        return res
-          .status(500)
-          .json({ success: false, message: "User creation failed." });
-      }
-
-      // Generate a verification token
-      const verificationToken = jwt.sign(
-        { userAuthId: savedAccount._id },
-        process.env.JWT_ACCESS_SECRET,
-        {
-          expiresIn: "1h",
-        }
-      );
-
-      // Generate the verification link
-      const verificationLink = `${req.protocol}://${req.get(
-        "host"
-      )}/auth/verify-email/${verificationToken}`;
-
-      // Send the verification email
-      await sendVerificationEmail(email, verificationLink);
-
-      res.status(201).json({
-        success: true,
-        message:
-          "Account registered successfully! Please verify your email to activate your account.",
-      });
+    // Check if the account was successfully created
+    if (!savedAccount) {
+      return res
+        .status(500)
+        .json({ success: false, message: "Account creation failed." });
     }
+
+    const user = new User({
+      email,
+      idAccount: savedAccount._id, // liên kết với account vừa tạo
+      name: "Nguyen Van A",
+      gender: "Male",
+      phone: "",
+      address: "HCM",
+      photo: "",
+    });
+    
+    const savedUser = await user.save();
+    if (!savedUser) {
+      return res
+        .status(500)
+        .json({ success: false, message: "User creation failed." });
+    }
+
+    const cart = new Cart({
+      idAccount: savedAccount._id,
+      products: [],
+    })
+
+    const savedCart = await cart.save();
+    if (!savedCart) {
+      return res
+        .status(500)
+        .json({ success: false, message: "Cart creation failed." });
+    }
+
+    // Generate a verification token
+    const verificationToken = jwt.sign(
+      { userAuthId: savedAccount._id },
+      process.env.JWT_ACCESS_SECRET,
+      {
+        expiresIn: "1h",
+      }
+    );
+
+    // Generate the verification link
+    const verificationLink = `${req.protocol}://${req.get(
+      "host"
+    )}/auth/verify-email/${verificationToken}`;
+
+    // Send the verification email
+    await sendVerificationEmail(email, verificationLink);
+
+    res.status(201).json({
+      success: true,
+      message:
+        "Account registered successfully! Please verify your email to activate your account.",
+    });
   } catch (error) {
     // Catch and return any errors
     res.status(500).json({ success: false, message: error.message });

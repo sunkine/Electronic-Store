@@ -20,7 +20,7 @@ export const createOrder = async (req, res) => {
 
   try {
     // Lấy thông tin giỏ hàng của người dùng
-    const cart = await Cart.findOne({ userId }).populate("products.idProduct");
+    const cart = await Cart.findOne({ idAccount: userId }).populate("products.idProduct");
     if (!cart || cart.products.length === 0) {
       return res.status(404).json({ success: false, message: "Cart is empty" });
     }
