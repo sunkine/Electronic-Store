@@ -13,7 +13,7 @@ export const createProduct = async (req, res) => {
     });
 
     // Lưu sản phẩm mới vào cơ sở dữ liệu
-    await newProduct.save(); 
+    await newProduct.save();
 
     // Tạo chi tiết sản phẩm mới
     const newDetailProduct = new detailProduct({
@@ -38,7 +38,6 @@ export const createProduct = async (req, res) => {
   }
 };
 
-
 export const updateProductByID = async (req, res) => {
   try {
     const idProduct = req.params.id;
@@ -46,10 +45,10 @@ export const updateProductByID = async (req, res) => {
 
     // If there's a new image file, add its path to updatedData
     if (req.file) {
-      updatedData.image = req.file.path.replace(/\\/g, '/'); // Adjust path format if necessary
+      updatedData.image = req.file.path.replace(/\\/g, "/"); // Adjust path format if necessary
     }
 
-    console.log('Dữ liệu cập nhật:', updatedData);
+    console.log("Dữ liệu cập nhật:", updatedData);
 
     const updatedProduct = await Product.findOneAndUpdate(
       { idProduct },
@@ -78,8 +77,10 @@ export const deleteProductByID = async (req, res) => {
   try {
     const { id } = req.params; // Lấy id từ params
     const deletedProduct = await Product.findOneAndDelete({ idProduct: id }); // Xóa sản phẩm theo idProduct
-    const deleteDetailProduct = await detailProduct.findOneAndDelete({idProduct: id}) //Xóa detail product theo id Product
-  
+    const deleteDetailProduct = await detailProduct.findOneAndDelete({
+      idProduct: id,
+    }); //Xóa detail product theo id Product
+
     if (!deletedProduct) {
       return res.status(404).json({
         success: false,
@@ -109,14 +110,16 @@ export const getAllProducts = async (req, res) => {
   const { nameOfProduct, typeProduct } = req.query;
   let query = {};
 
-  if (nameOfProduct) query.nameOfProduct = { $regex: nameOfProduct, $options: "i" };
+  if (nameOfProduct)
+    query.nameOfProduct = { $regex: nameOfProduct, $options: "i" };
   if (typeProduct) query.typeProduct = { $regex: typeProduct, $options: "i" };
+
   const page = parseInt(req.query.page);
+  const limit = parseInt(req.query.limit || 10);
   try {
-    const product = await Product
-      .find(query)
-      .limit(10)
-      .skip(page * 10);
+    const product = await Product.find(query)
+      .limit(limit)
+      .skip(page * limit);
     if (!product) {
       return res
         .status(404)
@@ -138,7 +141,7 @@ export const getProduct = async (req, res) => {
   try {
     const id = req.params.id;
     // Tìm sản phẩm theo id và populate trường detail
-    const product = await Product.findById(id).populate('detail');
+    const product = await Product.findById(id).populate("detail");
 
     if (!product) {
       res.status(404).json({ success: false, message: "Product not found." });

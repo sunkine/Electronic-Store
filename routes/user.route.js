@@ -12,7 +12,7 @@ const router = express.Router();
 
 router.get("/", isLoggedin, isAdmin, getAllUser);
 router.get("/:id", isLoggedin, getOneUser);
-router.put("/", isLoggedin, updateUser);
+router.put("/:id", isLoggedin, updateUser);
 router.delete("/:id", isLoggedin, isAdmin, deleteUser);
 
 

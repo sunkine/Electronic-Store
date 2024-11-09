@@ -114,10 +114,14 @@ export const deleteFromCart = async (req, res) => {
 
 export const getAllCart = async (req, res) => {
   const page = parseInt(req.query.page);
+  const limit = parseInt(req.query.limit || 10);
+  
+  let filters = {}
+
   try {
-    const cart = await Cart.find()
-      .limit(10)
-      .skip(page * 10);
+    const cart = await Cart.find(filters)
+      .limit(limit)
+      .skip(page * limit);
     if (!cart) {
       return res
         .status(404)

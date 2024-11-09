@@ -68,10 +68,14 @@ export const createOrder = async (req, res) => {
 
 export const getAllOrder = async (req, res) => {
   const page = parseInt(req.query.page);
+  const limit = parseInt(req.query.limit || 10);
+
+  let filters = {}
+  
   try {
-    const order = await Order.find()
-      .limit(10)
-      .skip(page * 10);
+    const order = await Order.find(filters)
+      .limit(limit)
+      .skip(page * limit);
     if (!order) {
       return res
         .status(404)
@@ -92,18 +96,19 @@ export const getAllOrder = async (req, res) => {
 export const getOrderById = async (req, res) => {
   const _id = req.userAuthId;
   const account = await Account.findById(_id);
-
+  
   if (!account) {
     return res.status(200).json({
       success: false,
       message: "Account not found.",
     });
   }
-
+  
   try {
+    const {id} = req.params;
     const page = parseInt(req.query.page);
     // Tìm các đơn hàng theo _id
-    const orders = await Order.find({ idCustomer: _id })
+    const orders = await Order.find({ idCustomer: id })
       .limit(10)
       .skip(page * 10);
 
@@ -179,7 +184,7 @@ export const payment = async (req, res) => {
     app_user: orderInfo._id,
     app_time: Date.now(),
     phone: orderInfo.phone,
-    address: orderInfo.address, // miliseconds
+    address: orderInfo.address, 
     item: JSON.stringify(items),
     embed_data: JSON.stringify(embed_data),
     amount: orderInfo.totalPrice,

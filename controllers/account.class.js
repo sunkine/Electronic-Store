@@ -9,10 +9,14 @@ import jwt from "jsonwebtoken";
 
 export const getAllAccount = async (req, res) => {
   const page = parseInt(req.query.page);
+  const limit = parseInt(req.query.limit || 10);
+
+  let filters = {}
+  
   try {
-    const account = await Account.find()
-      .limit(10)
-      .skip(page * 10);
+    const account = await Account.find(filters)
+      .limit(limit)
+      .skip(page * limit);
     if (!account) {
       return res
         .status(404)
@@ -81,34 +85,8 @@ export const deleteAccount = async (req, res) => {
 export const updateAccount = async (req, res) => {
   try {
     const id = req.params.id;
-    const user = req.userAuthId;
     const updateData = { ...req.body };
-    const currentUser = await Account.findById(user);
-
-    // Kiểm tra nếu người dùng hiện tại không phải là admin và không phải tài khoản chính họ
-    if (user !== id && currentUser.role !== "admin") {
-      return res
-        .status(403)
-        .json({ success: false, message: "Permission denied." });
-    }
-
-    // Nếu không phải admin, không cho phép cập nhật role
-    if (currentUser.role !== "admin") {
-      delete updateData.role;
-    }
-
-    if (updateData.username) {
-      const existingUsername = await Account.findOne({
-        username: updateData.username,
-        _id: { $ne: id },
-      });
-      if (existingUsername) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Username is already in use." });
-      }
-    }
-
+    
     if (req.body.password) {
       const salt = bcrypt.genSaltSync(10);
       const hash = bcrypt.hashSync(req.body.password, salt);
@@ -143,9 +121,8 @@ export const updateAccount = async (req, res) => {
 
 export const getAccount = async (req, res) => {
   try {
-    const _id = req.userAuthId;
-    const account = await Account.findById(_id);
     const { id } = req.params;
+    const account = await Account.findById(id);
 
     if (!account) {
       return res.status(200).json({

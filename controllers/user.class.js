@@ -25,8 +25,8 @@ export const updateUser = async (req, res) => {
       });
     }
    
-    const { email } = account;
-    const user = await User.findOne({ email });
+    const {id} = req.params;
+    const user = await User.findById(id)
 
     if (!user) {
       return res.status(404).json({
