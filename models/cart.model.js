@@ -13,8 +13,8 @@ const cartModel = new mongoose.Schema(
     products: [
       {
         idProduct: {
-          type: String,
-          required: true,
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Product",
         },
         nameOfProduct: {
           type: String,

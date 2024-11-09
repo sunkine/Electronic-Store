@@ -3,7 +3,7 @@ import Product from "../models/product.model.js";
 import Account from "../models/account.model.js";
 
 export const addToCart = async (req, res) => {
-  const { _id: idProduct, quantity = 1 } = req.body;
+  const { idProduct, quantity = 1 } = req.body;
 
   const userId = req.userAuthId;
   const account = await Account.findById(userId);
