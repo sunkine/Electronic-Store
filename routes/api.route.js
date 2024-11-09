@@ -23,5 +23,8 @@ app.use("/provider", ProviderRouter);
 app.use("/detail", DetailProduct)
 app.use("/services", ServicesRouter)
 app.use("/warehouse", WarehouseRouter);
+app.use("/detail", DetailProduct)
+app.use("/import", ImportRoute)
+
 
 export default app;

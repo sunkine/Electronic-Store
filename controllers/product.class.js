@@ -13,6 +13,7 @@ export const createProduct = async (req, res) => {
     });
 
     // Lưu sản phẩm mới vào cơ sở dữ liệu
+
     await newProduct.save();
 
     // Tạo chi tiết sản phẩm mới
@@ -37,6 +38,7 @@ export const createProduct = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 export const updateProductByID = async (req, res) => {
   try {
@@ -141,6 +143,7 @@ export const getProduct = async (req, res) => {
   try {
     const id = req.params.id;
     // Tìm sản phẩm theo id và populate trường detail
+
     const product = await Product.findById(id).populate("detail");
 
     if (!product) {

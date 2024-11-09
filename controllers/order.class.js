@@ -94,18 +94,27 @@ export const getOrderById = async (req, res) => {
       .limit(10)
       .skip(page * 10);
 
-    if (!orders) {
-      return res
-        .status(404)
-        .json({ success: false, message: "No orders found" });
-    }
+      if (!account) {
+        return res.status(404).json({ success: false, message: "Account not found" });
+      }
 
-    res.status(200).json({ success: true, total: orders.length, data: orders });
+      const page = parseInt(req.query.page) || 0; // Default to page 0 if not specified
+      const orders = await Order.find({ idCustomer: _id })
+        .limit(10)
+        .skip(page * 10);
+
+      if (!orders || orders.length === 0) {
+        return res.status(404).json({ success: false, message: "No orders found" });
+      }
+
+      return res.status(200).json({ success: true, total: orders.length, data: orders });
+    }
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
 
 export const deleteOrder = async (req, res) => {
   try {
@@ -150,7 +159,6 @@ export const updateOrder = async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
-};
 
 export const payment = async (req, res) => {
   const orderInfo = req.body;

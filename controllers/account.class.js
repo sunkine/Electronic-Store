@@ -8,6 +8,16 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
 export const getAllAccount = async (req, res) => {
+  const _id = req.userAuthId;
+  const account = await Account.findById(_id);
+
+  if (!account) {
+    return res.status(200).json({
+      success: false,
+      message: "Account not found.",
+    });
+  }
+
   const page = parseInt(req.query.page);
   const limit = parseInt(req.query.limit || 10);
 
@@ -35,6 +45,24 @@ export const getAllAccount = async (req, res) => {
 };
 
 export const disableAccount = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const account = await Account.findByIdAndUpdate({_id: id}, {isActive: false}, {new: true});
+    if (!account) {
+      res.status(404).json({ success: false, message: "Account not found." });
+    } else {
+      res.status(200).json({
+        success: true,
+        message: "Successfully disable account.",
+        data: account,
+      });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const deleteAccount = async (req, res) => {
   try {
     const id = req.params.id;
     const account = await Account.findByIdAndUpdate(
@@ -175,8 +203,6 @@ export const SignUp = asyncHandler(async (req, res) => {
       password: bcrypt.hashSync(password, 10), // hash the password
       isActive: false, // set account as not verified
     });
-
-
     // Save the account to the database
     const savedAccount = await account.save();
 
@@ -215,7 +241,6 @@ export const SignUp = asyncHandler(async (req, res) => {
         .status(500)
         .json({ success: false, message: "Cart creation failed." });
     }
-
 
     // Generate a verification token
     const verificationToken = jwt.sign(

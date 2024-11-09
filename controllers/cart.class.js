@@ -19,7 +19,7 @@ export const addToCart = async (req, res) => {
     if (!cart) {
       cart = new Cart({
         userId,
-        products: [{ idProduct, quantity, nameOfProduct, price }],
+        products: [{ _id, quantity, nameOfProduct, price }],
       });
     } else {
       const itemIndex = cart.products.findIndex(
@@ -28,7 +28,7 @@ export const addToCart = async (req, res) => {
       if (itemIndex > -1) {
         cart.products[itemIndex].quantity += quantity;
       } else {
-        cart.products.push({ idProduct, quantity, nameOfProduct, price });
+        cart.products.push({ _id, quantity, nameOfProduct, price });
       }
     }
 
