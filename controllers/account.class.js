@@ -65,28 +65,6 @@ export const disableAccount = async (req, res) => {
 export const deleteAccount = async (req, res) => {
   try {
     const id = req.params.id;
-    const account = await Account.findByIdAndUpdate(
-      { _id: id },
-      { isActive: false },
-      { new: true }
-    );
-    if (!account) {
-      res.status(404).json({ success: false, message: "Account not found." });
-    } else {
-      res.status(200).json({
-        success: true,
-        message: "Successfully disable account.",
-        data: account,
-      });
-    }
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-export const deleteAccount = async (req, res) => {
-  try {
-    const id = req.params.id;
     const account = await Account.findByIdAndDelete(id);
     const user = await User.findOneAndDelete({ idAccount: id });
     const cart = await Cart.findOneAndDelete({idAccount: id})

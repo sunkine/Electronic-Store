@@ -10,6 +10,7 @@ import ProviderRouter from "./provider.route.js";
 import DetailProduct from "./detailProduct.route.js"
 import ServicesRouter from "./services.route.js"
 import WarehouseRouter from "./warehouse.route.js"
+import ImportRoute from "./import.route.js"
 
 const app = express();
 
@@ -25,6 +26,5 @@ app.use("/services", ServicesRouter)
 app.use("/warehouse", WarehouseRouter);
 app.use("/detail", DetailProduct)
 app.use("/import", ImportRoute)
-
 
 export default app;
