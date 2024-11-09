@@ -1,26 +1,18 @@
 import Order from "../models/order.model.js";
 import Cart from "../models/cart.model.js";
-import Account from "../models/account.model.js";
 import axios from "axios";
 import CryptoJS from "crypto-js";
 import configPayment from "../config/configPayment.js";
 import moment from "moment";
-import qs from "qs"
+import qs from "qs";
 
 export const createOrder = async (req, res) => {
-  const userId = req.userAuthId;
-  const account = await Account.findById(userId);
-
-  if (!account) {
-    return res.status(200).json({
-      success: false,
-      message: "Account not found.",
-    });
-  }
-
+  const _id = req.userAuthId;
   try {
     // Lấy thông tin giỏ hàng của người dùng
-    const cart = await Cart.findOne({ idAccount: userId }).populate("products.idProduct");
+    const cart = await Cart.findOne({ idAccount: _id }).populate(
+      "products.idProduct"
+    );
     if (!cart || cart.products.length === 0) {
       return res.status(404).json({ success: false, message: "Cart is empty" });
     }
@@ -32,7 +24,7 @@ export const createOrder = async (req, res) => {
     );
     // Tạo đơn hàng mới
     const order = new Order({
-      idCustomer: userId,
+      idCustomer: _id,
       nameCustomer: req.body.nameCustomer,
       phone: req.body.phone,
       address: req.body.address,
@@ -70,8 +62,8 @@ export const getAllOrder = async (req, res) => {
   const page = parseInt(req.query.page);
   const limit = parseInt(req.query.limit || 10);
 
-  let filters = {}
-  
+  let filters = {};
+
   try {
     const order = await Order.find(filters)
       .limit(limit)
@@ -94,19 +86,9 @@ export const getAllOrder = async (req, res) => {
 };
 
 export const getOrderById = async (req, res) => {
-  const _id = req.userAuthId;
-  const account = await Account.findById(_id);
-  
-  if (!account) {
-    return res.status(200).json({
-      success: false,
-      message: "Account not found.",
-    });
-  }
-  
+  const { id } = req.params;
+  const page = parseInt(req.query.page);
   try {
-    const {id} = req.params;
-    const page = parseInt(req.query.page);
     // Tìm các đơn hàng theo _id
     const orders = await Order.find({ idCustomer: id })
       .limit(10)
@@ -144,8 +126,8 @@ export const deleteOrder = async (req, res) => {
 };
 
 export const updateOrder = async (req, res) => {
+  const id = req.params.id;
   try {
-    const id = req.params.id;
     const idOrder = await Order.findByIdAndUpdate(
       id,
       {
@@ -184,14 +166,13 @@ export const payment = async (req, res) => {
     app_user: orderInfo._id,
     app_time: Date.now(),
     phone: orderInfo.phone,
-    address: orderInfo.address, 
+    address: orderInfo.address,
     item: JSON.stringify(items),
     embed_data: JSON.stringify(embed_data),
     amount: orderInfo.totalPrice,
     description: `Payment for the order #${transID}`,
     bank_code: "",
-    callback_url:
-      "https://a9fc-123-21-70-138.ngrok-free.app/order/callback",
+    callback_url: "https://a9fc-123-21-70-138.ngrok-free.app/order/callback",
   };
 
   // appid|app_trans_id|appuser|amount|apptime|embeddata|item
@@ -271,7 +252,8 @@ export const checkStatusOrder = async (req, res) => {
     app_trans_id, // Input your app_trans_id
   };
 
-  let data = postData.app_id + "|" + postData.app_trans_id + "|" + configPayment.key1; // appid|app_trans_id|key1
+  let data =
+    postData.app_id + "|" + postData.app_trans_id + "|" + configPayment.key1; // appid|app_trans_id|key1
   postData.mac = CryptoJS.HmacSHA256(data, configPayment.key1).toString();
 
   let postConfig = {

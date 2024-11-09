@@ -61,6 +61,7 @@ export const deleteAccount = async (req, res) => {
     const id = req.params.id;
     const account = await Account.findByIdAndDelete(id);
     const user = await User.findOneAndDelete({ idAccount: id });
+    const cart = await Cart.findOneAndDelete({idAccount: id})
     if (!account) {
       res.status(404).json({ success: false, message: "Account not found." });
     }
@@ -71,9 +72,15 @@ export const deleteAccount = async (req, res) => {
         .json({ success: false, message: "User with this account not found." });
     }
 
+    if (!cart) {
+      res
+        .status(404)
+        .json({ success: false, message: "Cart with this account not found." });
+    }
+
     res.status(200).json({
       success: true,
-      message: "Successfully delete account and user.",
+      message: "Successfully delete account, user and cart.",
       dataAccount: account,
       dataUser: user,
     });
@@ -93,6 +100,10 @@ export const updateAccount = async (req, res) => {
       updateData.password = hash;
     }
 
+    const existingEmail = await Account.findOne({email: updateData.email})
+    if (existingEmail) {
+      return res.status(401).json({success: false, message: "Email is already registered. "})
+    }
     // Cập nhật tài khoản
     const updatedAccount = await Account.findByIdAndUpdate(
       id,

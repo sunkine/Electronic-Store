@@ -15,5 +15,4 @@ router.get("/:id", isLoggedin, getOneUser);
 router.put("/:id", isLoggedin, updateUser);
 router.delete("/:id", isLoggedin, isAdmin, deleteUser);
 
-
 export default router;
