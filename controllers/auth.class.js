@@ -12,15 +12,14 @@ import Cart from "../models/cart.model.js";
 export const SignIn = async (req, res) => {
   try {
     const account = await Account.findOne({ email: req.body.email });
-    const user = await User.findOne({email: req.body.email})
-    const cart = await Cart.findOne({idAccount: account._id})
-
     if (!account) {
       return res.status(404).json({
         success: false,
         message: "Email not found.",
       });
     }
+    const user = await User.findOne({email: account.email})
+    const cart = await Cart.findOne({idAccount: account._id})
 
     const isPasswordValid = await bcrypt.compare(
       req.body.password,

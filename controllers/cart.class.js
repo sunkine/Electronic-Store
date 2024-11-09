@@ -18,17 +18,17 @@ export const addToCart = async (req, res) => {
     let cart = await Cart.findOne({ idAccount: _id });
     if (!cart) {
       cart = new Cart({
-        userId,
-        products: [{ _id, quantity, nameOfProduct, price }],
+        _id,
+        products: [{ idProduct, quantity, nameOfProduct, price }],
       });
     } else {
       const itemIndex = cart.products.findIndex(
-        (item) => item.idProduct.toString() === idProduct
+        (item) => item.idProduct === idProduct
       );
       if (itemIndex > -1) {
         cart.products[itemIndex].quantity += quantity;
       } else {
-        cart.products.push({ _id, quantity, nameOfProduct, price });
+        cart.products.push({ idProduct, quantity, nameOfProduct, price });
       }
     }
 
@@ -121,7 +121,7 @@ export const getCartById = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const cart = await Cart.findOne({ idAccount: id });
+    const cart = await Cart.findById(id);
     if (!cart) {
       return res
         .status(404)
