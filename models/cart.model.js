@@ -2,19 +2,15 @@ import mongoose from "../config/mongoose.js";
 
 const cartModel = new mongoose.Schema(
   {
-    isOrder: {
-      type: Boolean,
-      default: false,
-    },
-    userId: {
+    idAccount: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Account",
     },
     products: [
       {
         idProduct: {
-          type: String,
-          required: true,
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Product",
         },
         nameOfProduct: {
           type: String,

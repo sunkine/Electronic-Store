@@ -1,6 +1,5 @@
 import Account from "../models/account.model.js";
 import jwt from 'jsonwebtoken'
-import { verifyToken } from "./checkLogin.js";
 
 const isAdmin = async (req, res, next) => {
   try {
@@ -41,6 +40,5 @@ const isAdmin = async (req, res, next) => {
     });
   }
 };
-
 
 export default isAdmin;

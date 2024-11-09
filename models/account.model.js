@@ -3,7 +3,6 @@ import mongoose from "../config/mongoose.js";
 const accountSchema = new mongoose.Schema({
     username: {
         type: String,
-        unique: true,
         required: true,
     },
     password: {
