@@ -56,11 +56,13 @@ export const deleteCart = async (req, res) => {
 };
 
 export const deleteFromCart = async (req, res) => {
-  const { idProduct } = req.body;
-
+  const { idProduct, idCart} = req.body;
+    if (!idProduct || !idCart) {
+      //return res.status(400).json({ success: false, message: "idProduct and idCart are required" });
+      return res.status(400).json({ success: false, message: req.body.idCart });
+  }
   try {
-    const { id } = req.params;
-    let cart = await Cart.findOne({ idAccount: id });
+    let cart = await Cart.findById(idCart);
     if (!cart) {
       return res
         .status(404)
@@ -68,7 +70,7 @@ export const deleteFromCart = async (req, res) => {
     }
 
     const productIndex = cart.products.findIndex(
-      (item) => item.idProduct.toString() === idProduct
+      (item) => item.idProduct === idProduct
     );
 
     if (productIndex > -1) {
