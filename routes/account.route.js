@@ -5,20 +5,16 @@ import {
   getAllAccount,
   getAccount,
   SignUp,
-  forgotPasswordCtrl,
-  resetPasswordCtrl,
 } from "../controllers/account.class.js";
 import { isLoggedin } from "../middlewares/checkLogin.js";
 import isAdmin from "../middlewares/checkAdmin.js";
 
 const router = express.Router();
 
-router.post("/sign-up", SignUp);
-router.get("/information", isLoggedin, getAccount);
 router.get("/", isLoggedin, isAdmin, getAllAccount);
+router.get("/:id", isLoggedin, getAccount);
+router.post("/", SignUp)
 router.delete("/:id", isLoggedin, isAdmin, deleteAccount);
-router.put("/", isLoggedin, updateAccount);
-router.post("/forgot-password", forgotPasswordCtrl);
-router.get("/reset-password/:token", resetPasswordCtrl);
+router.put("/:id", isLoggedin, updateAccount)
 
 export default router;

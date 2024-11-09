@@ -4,19 +4,9 @@ import Account from "../models/account.model.js";
 
 export const addToCart = async (req, res) => {
   const { idProduct, quantity = 1 } = req.body;
-
-  const userId = req.userAuthId;
-  const account = await Account.findById(userId);
-
-  if (!account) {
-    return res.status(200).json({
-      success: false,
-      message: "Account not found.",
-    });
-  }
-
+  const _id = req.userAuthId;
   try {
-    const product = await Product.findOne({ idProduct });
+    const product = await Product.findById(idProduct);
     if (!product) {
       return res
         .status(404)
@@ -25,7 +15,7 @@ export const addToCart = async (req, res) => {
 
     const { nameOfProduct, price } = product;
 
-    let cart = await Cart.findOne({ userId });
+    let cart = await Cart.findOne({ idAccount: _id });
     if (!cart) {
       cart = new Cart({
         userId,
@@ -50,21 +40,27 @@ export const addToCart = async (req, res) => {
   }
 };
 
+export const deleteCart = async (req, res) => {
+  const { id } = req.params;
+  const cart = await Cart.findByIdAndDelete(id);
+
+  if (!cart) {
+    return res.status(404).json({ success: false, message: "Cart not found" });
+  } else {
+    return res.status(200).json({
+      success: true,
+      message: "Deleting cart successfully",
+      data: cart,
+    });
+  }
+};
+
 export const deleteFromCart = async (req, res) => {
   const { idProduct } = req.body;
 
-  const userId = req.userAuthId;
-  const account = await Account.findById(userId);
-
-  if (!account) {
-    return res.status(200).json({
-      success: false,
-      message: "Account not found.",
-    });
-  }
-
   try {
-    let cart = await Cart.findOne({ userId });
+    const { id } = req.params;
+    let cart = await Cart.findOne({ idAccount: id });
     if (!cart) {
       return res
         .status(404)
@@ -78,13 +74,11 @@ export const deleteFromCart = async (req, res) => {
     if (productIndex > -1) {
       cart.products.splice(productIndex, 1);
       await cart.save();
-      return res
-        .status(200)
-        .json({
-          success: true,
-          message: "Product removed from cart",
-          data: cart,
-        });
+      return res.status(200).json({
+        success: true,
+        message: "Product removed from cart",
+        data: cart,
+      });
     } else {
       return res
         .status(404)
@@ -98,10 +92,14 @@ export const deleteFromCart = async (req, res) => {
 
 export const getAllCart = async (req, res) => {
   const page = parseInt(req.query.page);
+  const limit = parseInt(req.query.limit || 10);
+
+  let filters = {};
+
   try {
-    const cart = await Cart.find()
-      .limit(10)
-      .skip(page * 10);
+    const cart = await Cart.find(filters)
+      .limit(limit)
+      .skip(page * limit);
     if (!cart) {
       return res
         .status(404)
@@ -120,20 +118,10 @@ export const getAllCart = async (req, res) => {
 };
 
 export const getCartById = async (req, res) => {
-  const _id = req.userAuthId;
-  const account = await Account.findById(_id);
-
-  if (!account) {
-    return res.status(200).json({
-      success: false,
-      message: "Account not found.",
-    });
-  }
+  const { id } = req.params;
 
   try {
-
-    const cart = await Cart.findOne({ userId: _id });
-
+    const cart = await Cart.findOne({ idAccount: id });
     if (!cart) {
       return res
         .status(404)
@@ -148,22 +136,14 @@ export const getCartById = async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
-}
+};
 
 export const clearCart = async (req, res) => {
   const _id = req.userAuthId;
-  const account = await Account.findById(_id);
-
-  if (!account) {
-    return res.status(200).json({
-      success: false,
-      message: "Account not found.",
-    });
-  }
 
   try {
     // Tìm giỏ hàng của người dùng
-    const cart = await Cart.findOne({ userId: _id });
+    const cart = await Cart.findOne({ idAccount: _id });
     if (!cart) {
       return res
         .status(404)
@@ -171,7 +151,9 @@ export const clearCart = async (req, res) => {
     }
 
     if (cart.products.length === 0) {
-      return res.status(401).json({ success: false, message: "Cart already empty" });
+      return res
+        .status(401)
+        .json({ success: false, message: "Cart already empty" });
     }
 
     // Làm trống giỏ hàng
@@ -184,5 +166,42 @@ export const clearCart = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+export const updateCart = async (req, res) => {
+  const { id } = req.params;
+  const { idProduct, quantity } = req.body; // quantity sẽ là +1 hoặc -1 tùy thuộc vào hành động
+
+  try {
+    // Tìm giỏ hàng theo id
+    const cart = await Cart.findById(id);
+    if (!cart) {
+      return res.status(404).json({ success: false, message: "Cart not found" });
+    }
+
+    // Tìm sản phẩm trong giỏ hàng dựa trên productId
+    const productIndex = cart.products.findIndex(
+      (product) => product.idProduct.toString() === idProduct
+    );
+
+    if (productIndex === -1) {
+      return res.status(404).json({ success: false, message: "Product not found in cart" });
+    }
+
+    // Cập nhật số lượng sản phẩm, đảm bảo số lượng tối thiểu là 1
+    const newQuantity = Number(cart.products[productIndex].quantity) + Number(quantity);
+    cart.products[productIndex].quantity = Math.max(1, newQuantity);
+
+    // Lưu lại giỏ hàng
+    const updatedCart = await cart.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Successfully updated quantity.",
+      data: updatedCart,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };

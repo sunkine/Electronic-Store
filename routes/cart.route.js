@@ -1,19 +1,19 @@
 import express from "express";
 import {
   addToCart,
-  clearCart,
   deleteFromCart,
   getAllCart,
   getCartById,
+  updateCart,
 } from "../controllers/cart.class.js";
 import { isLoggedin } from "../middlewares/checkLogin.js";
 
 const router = express.Router();
 
+router.get("/", getAllCart);
+router.get("/:id", isLoggedin, getCartById);
 router.post("/", isLoggedin, addToCart);
-router.post("/clear", isLoggedin, clearCart);
-router.delete("/", isLoggedin, deleteFromCart);
-router.get("/all", getAllCart);
-router.get("/", isLoggedin, getCartById);
+router.put("/:id", isLoggedin, updateCart)
+router.delete("/:id", isLoggedin, deleteFromCart);
 
 export default router;

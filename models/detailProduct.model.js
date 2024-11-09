@@ -1,31 +1,17 @@
 import mongoose from "../config/mongoose.js"
 
-const productsModel = new mongoose.Schema({
+const detailProductsModel = new mongoose.Schema({
+
     idProduct: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Product",
     },
-    nameOfProduct: {
+    detailDescription: {
         type: String,
-        required: true,
-    },
-    quantity: {
-        type: Number,
-        default: 1,
-    },
-    price: {
-        type: Number,
-        required: true,
-    },
-    idTypeProduct: {
-        type: String,
-        required: true,
-    }, 
-    status: {
-        type: String,
-        emum: ["Available", "Not availale"],
+        default: "Sản phẩm này không có thông tin chi tiết.",
     },
 })
 
-const Product = mongoose.model('Product', productsModel)
-export default Product;
+const detailProduct = mongoose.model('detailProduct', detailProductsModel)
+export default detailProduct;
+

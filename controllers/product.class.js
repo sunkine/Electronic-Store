@@ -1,4 +1,5 @@
 import Product from "../models/product.model.js";
+import detailProduct from "../models/detailProduct.model.js";
 
 export const createProduct = async (req, res) => {
   try {
@@ -11,7 +12,21 @@ export const createProduct = async (req, res) => {
       image: imagePath, // Lưu đường dẫn hình ảnh vào cơ sở dữ liệu
     });
 
-    await newProduct.save(); // Lưu sản phẩm mới vào cơ sở dữ liệu
+    // Lưu sản phẩm mới vào cơ sở dữ liệu
+    await newProduct.save();
+
+    // Tạo chi tiết sản phẩm mới
+    const newDetailProduct = new detailProduct({
+      idProduct: newProduct._id, // Liên kết với sản phẩm vừa tạo
+      description: productData.detailDescription, // Mô tả chi tiết
+    });
+
+    // Lưu chi tiết sản phẩm vào cơ sở dữ liệu
+    await newDetailProduct.save();
+
+    // Cập nhật lại sản phẩm để liên kết chi tiết
+    newProduct.detail = newDetailProduct._id;
+    await newProduct.save(); // Lưu lại sản phẩm với thông tin chi tiết
 
     res.status(201).json({
       success: true,
@@ -30,10 +45,10 @@ export const updateProductByID = async (req, res) => {
 
     // If there's a new image file, add its path to updatedData
     if (req.file) {
-      updatedData.image = req.file.path.replace(/\\/g, '/'); // Adjust path format if necessary
+      updatedData.image = req.file.path.replace(/\\/g, "/"); // Adjust path format if necessary
     }
 
-    console.log('Dữ liệu cập nhật:', updatedData);
+    console.log("Dữ liệu cập nhật:", updatedData);
 
     const updatedProduct = await Product.findOneAndUpdate(
       { idProduct },
@@ -62,6 +77,9 @@ export const deleteProductByID = async (req, res) => {
   try {
     const { id } = req.params; // Lấy id từ params
     const deletedProduct = await Product.findOneAndDelete({ idProduct: id }); // Xóa sản phẩm theo idProduct
+    const deleteDetailProduct = await detailProduct.findOneAndDelete({
+      idProduct: id,
+    }); //Xóa detail product theo id Product
 
     if (!deletedProduct) {
       return res.status(404).json({
@@ -70,10 +88,18 @@ export const deleteProductByID = async (req, res) => {
       });
     }
 
+    if (!deleteDetailProduct) {
+      return res.status(404).json({
+        success: false,
+        message: "Detail product of product not found.",
+      });
+    }
+
     res.status(200).json({
       success: true,
       message: "Product deleted successfully.",
-      data: deletedProduct,
+      dataProduct: deletedProduct,
+      dataDetail: deleteDetailProduct,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -81,12 +107,19 @@ export const deleteProductByID = async (req, res) => {
 };
 
 export const getAllProducts = async (req, res) => {
+  const { nameOfProduct, typeProduct } = req.query;
+  let query = {};
+
+  if (nameOfProduct)
+    query.nameOfProduct = { $regex: nameOfProduct, $options: "i" };
+  if (typeProduct) query.typeProduct = { $regex: typeProduct, $options: "i" };
+
   const page = parseInt(req.query.page);
+  const limit = parseInt(req.query.limit || 10);
   try {
-    const product = await Product
-      .find({})
-      .limit(10)
-      .skip(page * 10);
+    const product = await Product.find(query)
+      .limit(limit)
+      .skip(page * limit);
     if (!product) {
       return res
         .status(404)
@@ -107,7 +140,9 @@ export const getAllProducts = async (req, res) => {
 export const getProduct = async (req, res) => {
   try {
     const id = req.params.id;
-    const product = await Product.findById(id);
+    // Tìm sản phẩm theo id và populate trường detail
+    const product = await Product.findById(id).populate("detail");
+
     if (!product) {
       res.status(404).json({ success: false, message: "Product not found." });
     } else {
@@ -121,24 +156,3 @@ export const getProduct = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-
-export const listProductSearch = async (req, res) => {
-  const { name, typeProduct } = req.query;
-  let filters = {};
-
-  if (name) filters.name = { $regex: name, $options: "i" };
-  if (typeProduct) filters.typeProduct = { $regex: typeProduct, $options: "i" };
-
-  try {
-    const products = await Product.find(filters);
-    res.status(200).json({
-      success: true,
-      message: "Successfully search item.",
-      total: products.length,
-      data: products,
-    });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-

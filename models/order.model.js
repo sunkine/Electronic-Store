@@ -29,7 +29,7 @@ const orderModel = new mongoose.Schema({
     },
     payment_method: {
         type: String,
-        enum: ["Momo","Cash", "COD"],
+        enum: ["Momo","Cash"],
         default: "Cash",
     },
     isPayment: {

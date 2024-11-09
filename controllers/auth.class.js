@@ -6,10 +6,14 @@ import {
 } from "../utils/createToken.js";
 import asyncHandler from "express-async-handler";
 import jwt from "jsonwebtoken";
+import User from "../models/user.model.js";
+import Cart from "../models/cart.model.js";
 
 export const SignIn = async (req, res) => {
   try {
     const account = await Account.findOne({ email: req.body.email });
+    const user = await User.findOne({email: req.body.email})
+    const cart = await Cart.findOne({idAccount: account._id})
 
     if (!account) {
       return res.status(404).json({
@@ -33,7 +37,7 @@ export const SignIn = async (req, res) => {
     if (!account.isActive) {
       return res.status(401).json({
         success: false,
-        message: "Please verify your email to activate your account.",
+        message: "Your account have been disable. Please contact the administrator to active your account.",
       });
     }
 
@@ -56,6 +60,8 @@ export const SignIn = async (req, res) => {
         message: "Successfully logged in.",
         accessToken,
         data: userDetails,
+        idUser: user._id,
+        idCart: cart._id,
       });
   } catch (error) {
     console.error(error); 
