@@ -183,14 +183,13 @@ export const SignUp = asyncHandler(async (req, res) => {
     });
     // Save the account to the database
     const savedAccount = await account.save();
-
     // Check if the account was successfully created
     if (!savedAccount) {
       return res
         .status(500)
         .json({ success: false, message: "Account creation failed." });
     }
-
+    
     const user = new User({
       email,
       idAccount: savedAccount._id, // liên kết với account vừa tạo
@@ -219,7 +218,8 @@ export const SignUp = asyncHandler(async (req, res) => {
         .status(500)
         .json({ success: false, message: "Cart creation failed." });
     }
-
+    
+    
     // Generate a verification token
     const verificationToken = jwt.sign(
       { userAuthId: savedAccount._id },
