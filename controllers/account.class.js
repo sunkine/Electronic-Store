@@ -21,8 +21,8 @@ export const getAllAccount = async (req, res) => {
   const page = parseInt(req.query.page);
   const limit = parseInt(req.query.limit || 10);
 
-  let filters = {}
-  
+  let filters = {};
+
   try {
     const account = await Account.find(filters)
       .limit(limit)
@@ -47,7 +47,11 @@ export const getAllAccount = async (req, res) => {
 export const disableAccount = async (req, res) => {
   try {
     const id = req.params.id;
-    const account = await Account.findByIdAndUpdate({_id: id}, {isActive: false}, {new: true});
+    const account = await Account.findByIdAndUpdate(
+      { _id: id },
+      { isActive: false },
+      { new: true }
+    );
     if (!account) {
       res.status(404).json({ success: false, message: "Account not found." });
     } else {
@@ -67,7 +71,7 @@ export const deleteAccount = async (req, res) => {
     const id = req.params.id;
     const account = await Account.findByIdAndDelete(id);
     const user = await User.findOneAndDelete({ idAccount: id });
-    const cart = await Cart.findOneAndDelete({idAccount: id})
+    const cart = await Cart.findOneAndDelete({ idAccount: id });
     if (!account) {
       res.status(404).json({ success: false, message: "Account not found." });
     }
@@ -99,16 +103,18 @@ export const updateAccount = async (req, res) => {
   try {
     const id = req.params.id;
     const updateData = { ...req.body };
-    
+
     if (req.body.password) {
       const salt = bcrypt.genSaltSync(10);
       const hash = bcrypt.hashSync(req.body.password, salt);
       updateData.password = hash;
     }
 
-    const existingEmail = await Account.findOne({email: updateData.email})
+    const existingEmail = await Account.findOne({ email: updateData.email });
     if (existingEmail) {
-      return res.status(401).json({success: false, message: "Email is already registered. "})
+      return res
+        .status(401)
+        .json({ success: false, message: "Email is already registered. " });
     }
     // Cập nhật tài khoản
     const updatedAccount = await Account.findByIdAndUpdate(
@@ -199,7 +205,7 @@ export const SignUp = asyncHandler(async (req, res) => {
       address: "HCM",
       photo: "",
     });
-    
+
     const savedUser = await user.save();
     if (!savedUser) {
       return res
@@ -210,7 +216,7 @@ export const SignUp = asyncHandler(async (req, res) => {
     const cart = new Cart({
       idAccount: savedAccount._id,
       products: [],
-    })
+    });
 
     const savedCart = await cart.save();
     if (!savedCart) {

@@ -18,7 +18,7 @@ export const addToCart = async (req, res) => {
     let cart = await Cart.findOne({ idAccount: _id });
     if (!cart) {
       cart = new Cart({
-        _id,
+        idAccount: _id,
         products: [{ idProduct, quantity, nameOfProduct, price }],
       });
     } else {
@@ -56,41 +56,36 @@ export const deleteCart = async (req, res) => {
 };
 
 export const deleteFromCart = async (req, res) => {
-  const { idProduct, idCart} = req.body;
-    if (!idProduct || !idCart) {
-      //return res.status(400).json({ success: false, message: "idProduct and idCart are required" });
-      return res.status(400).json({ success: false, message: req.body.idCart });
-  }
+  const { idProduct, idCart } = req.body;
   try {
-    let cart = await Cart.findById(idCart);
+    // Tìm giỏ hàng bằng idAccount
+    const cart = await Cart.findOne({ idAccount: idCart });
     if (!cart) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Cart not found" });
+      return res.status(404).json({ success: false, message: "Cart not found" });
     }
 
-    const productIndex = cart.products.findIndex(
-      (item) => item.idProduct === idProduct
-    );
+    // Tìm chỉ mục sản phẩm trong giỏ hàng
+    const productIndex = cart.products.findIndex((item) => item.idProduct.toString() === idProduct);
 
+    // Kiểm tra sản phẩm và xóa nếu có
     if (productIndex > -1) {
       cart.products.splice(productIndex, 1);
       await cart.save();
+
       return res.status(200).json({
         success: true,
         message: "Product removed from cart",
         data: cart,
       });
     } else {
-      return res
-        .status(404)
-        .json({ success: false, message: "Product not found in cart" });
+      return res.status(404).json({ success: false, message: "Product not found in cart" });
     }
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error("Error deleting product from cart:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
 
 export const getAllCart = async (req, res) => {
   const page = parseInt(req.query.page);

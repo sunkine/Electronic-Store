@@ -87,17 +87,11 @@ export const getAllOrder = async (req, res) => {
 
 export const getOrderById = async (req, res) => {
   const { id } = req.params;
-  const page = parseInt(req.query.page);
   try {
     // Tìm các đơn hàng theo _id
-
-      if (!account) {
-        return res.status(404).json({ success: false, message: "Account not found" });
-      }
-
       const page = parseInt(req.query.page) || 0; // Default to page 0 if not specified
-      const orders = await Order.find({ idCustomer: _id })
-        .limit(10)
+      const orders = await Order.find({ idCustomer: id })
+        .limit(page)
         .skip(page * 10);
 
       if (!orders || orders.length === 0) {
@@ -178,7 +172,7 @@ export const payment = async (req, res) => {
     amount: orderInfo.totalPrice,
     description: `Payment for the order #${transID}`,
     bank_code: "",
-    callback_url: "https://a9fc-123-21-70-138.ngrok-free.app/order/callback",
+    callback_url: "https://66eb-2402-800-62a6-f9c3-858b-ae14-e2e5-f7ee.ngrok-free.app/services/callback",
   };
 
   // appid|app_trans_id|appuser|amount|apptime|embeddata|item
