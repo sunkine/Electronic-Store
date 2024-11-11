@@ -105,15 +105,15 @@ export const verifyEmail = asyncHandler(async (req, res) => {
     // Set the account to verified
     account.isActive = true;
     await account.save();
-
-    res.status(200).json({
-      success: true,
-      message: "Account successfully verified!",
-      data: {
-        id: account._id,
-        email: account.email,
-      },
-    });
+    res.redirect(`http://localhost:3001/verification-success`);
+    // res.status(200).json({
+    //   success: true,
+    //   message: "Account successfully verified!",
+    //   data: {
+    //     id: account._id,
+    //     email: account.email,
+    //   },
+    // });
   } catch (err) {
     if (err.name === "TokenExpiredError") {
       return res
