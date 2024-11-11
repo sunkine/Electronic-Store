@@ -1,6 +1,5 @@
 import Cart from "../models/cart.model.js";
 import Product from "../models/product.model.js";
-import Account from "../models/account.model.js";
 
 export const addToCart = async (req, res) => {
   const { idProduct, quantity = 1 } = req.body;

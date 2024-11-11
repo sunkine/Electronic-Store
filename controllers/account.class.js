@@ -6,6 +6,7 @@ import { sendEmail, sendVerificationEmail } from "../utils/sendEmail.js";
 import generateAccessToken from "../utils/createToken.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import mongoose from "../config/mongoose.js";
 
 export const getAllAccount = async (req, res) => {
   const _id = req.userAuthId;
@@ -166,20 +167,25 @@ export const getAccount = async (req, res) => {
 
 export const SignUp = asyncHandler(async (req, res) => {
   const { username, email, password } = req.body;
-  // Make sure both email and password are provided
   if (!email || !password) {
     return res
       .status(400)
       .json({ success: false, message: "Email and password are required." });
   }
 
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
-    const existingEmail = await Account.findOne({ email });
+    const existingEmail = await Account.findOne({ email }).session(session);
     if (existingEmail) {
+      await session.abortTransaction();
+      session.endSession();
       return res
         .status(400)
         .json({ success: false, message: "Email is already registered." });
     }
+
     // Create a new account
     const account = new Account({
       username,
@@ -187,27 +193,23 @@ export const SignUp = asyncHandler(async (req, res) => {
       password: bcrypt.hashSync(password, 10), // hash the password
       isActive: false, // set account as not verified
     });
-    // Save the account to the database
-    const savedAccount = await account.save();
-    // Check if the account was successfully created
+    const savedAccount = await account.save({ session });
     if (!savedAccount) {
+      await session.abortTransaction();
+      session.endSession();
       return res
         .status(500)
         .json({ success: false, message: "Account creation failed." });
     }
-    
+
     const user = new User({
       email,
-      idAccount: savedAccount._id, // liên kết với account vừa tạo
-      name: "Nguyen Van A",
-      gender: "Male",
-      phone: "",
-      address: "HCM",
-      photo: "",
+      idAccount: savedAccount._id,
     });
-
-    const savedUser = await user.save();
+    const savedUser = await user.save({ session });
     if (!savedUser) {
+      await session.abortTransaction();
+      session.endSession();
       return res
         .status(500)
         .json({ success: false, message: "User creation failed." });
@@ -217,22 +219,24 @@ export const SignUp = asyncHandler(async (req, res) => {
       idAccount: savedAccount._id,
       products: [],
     });
-
-    const savedCart = await cart.save();
+    const savedCart = await cart.save({ session });
     if (!savedCart) {
+      await session.abortTransaction();
+      session.endSession();
       return res
         .status(500)
         .json({ success: false, message: "Cart creation failed." });
     }
-    
-    
+
+    // Commit the transaction if everything is successful
+    await session.commitTransaction();
+    session.endSession();
+
     // Generate a verification token
     const verificationToken = jwt.sign(
       { userAuthId: savedAccount._id },
       process.env.JWT_ACCESS_SECRET,
-      {
-        expiresIn: "1h",
-      }
+      { expiresIn: "1h" }
     );
 
     // Generate the verification link
@@ -249,10 +253,13 @@ export const SignUp = asyncHandler(async (req, res) => {
         "Account registered successfully! Please verify your email to activate your account.",
     });
   } catch (error) {
-    // Catch and return any errors
+    // Rollback transaction if any error occurs
+    await session.abortTransaction();
+    session.endSession();
     res.status(500).json({ success: false, message: error.message });
   }
 });
+
 
 export const forgotPasswordCtrl = asyncHandler(async (req, res) => {
   // Check if the user exists
