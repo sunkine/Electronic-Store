@@ -1,6 +1,5 @@
 import Cart from "../models/cart.model.js";
 import Product from "../models/product.model.js";
-import Account from "../models/account.model.js";
 
 export const addToCart = async (req, res) => {
   const { idProduct, quantity = 1 } = req.body;
@@ -23,7 +22,7 @@ export const addToCart = async (req, res) => {
       });
     } else {
       const itemIndex = cart.products.findIndex(
-        (item) => item.idProduct === idProduct
+        (item) => item.idProduct.toString() === idProduct
       );
       if (itemIndex > -1) {
         cart.products[itemIndex].quantity += quantity;
@@ -56,36 +55,47 @@ export const deleteCart = async (req, res) => {
 };
 
 export const deleteFromCart = async (req, res) => {
-  const { idProduct, idCart } = req.body;
+  const { id } = req.params;  // Get the combined id (idCart-idProduct)
+
+  if (!id) {
+      return res.status(400).json({ success: false, message: "Missing id in request" });
+  }
+
+  // Split the id into idCart and idProduct
+  const [idCart, idProduct] = id.split('-');
+
+  if (!idCart || !idProduct) {
+      return res.status(400).json({ success: false, message: "Invalid id format" });
+  }
+
   try {
-    // Tìm giỏ hàng bằng idAccount
-    const cart = await Cart.findOne({ idAccount: idCart });
-    if (!cart) {
-      return res.status(404).json({ success: false, message: "Cart not found" });
-    }
+      // Find the cart by idCart
+      const cart = await Cart.findById({idCart});
+      if (!cart) {
+          return res.status(404).json({ success: false, message: "Cart not found" });
+      }
 
-    // Tìm chỉ mục sản phẩm trong giỏ hàng
-    const productIndex = cart.products.findIndex((item) => item.idProduct.toString() === idProduct);
+      // Find the index of the product in the cart
+      const productIndex = cart.products.findIndex((item) => item.idProduct.toString() === idProduct);
 
-    // Kiểm tra sản phẩm và xóa nếu có
-    if (productIndex > -1) {
-      cart.products.splice(productIndex, 1);
-      await cart.save();
+      // Check if product exists and remove it
+      if (productIndex > -1) {
+          cart.products.splice(productIndex, 1);
+          await cart.save();
 
-      return res.status(200).json({
-        success: true,
-        message: "Product removed from cart",
-        data: cart,
-      });
-    } else {
-      return res.status(404).json({ success: false, message: "Product not found in cart" });
-    }
+          return res.status(200).json({
+              success: true,
+              message: "Product removed from cart",
+              data: cart,
+          });
+      } else {
+          return res.status(404).json({ success: false, message: "Product not found in cart" });
+      }
   } catch (error) {
-    console.error("Error deleting product from cart:", error);
-    return res.status(500).json({ success: false, message: "Server error" });
+      console.error("Error deleting product from cart:", error);
+      return res.status(500).json({ success: false, message: "Server error" });
   }
 };
-
 
 export const getAllCart = async (req, res) => {
   const page = parseInt(req.query.page);
