@@ -3,7 +3,7 @@ import User from "../models/user.model.js";
 import Cart from "../models/cart.model.js";
 import asyncHandler from "express-async-handler";
 import { sendEmail, sendVerificationEmail } from "../utils/sendEmail.js";
-import generateAccessToken from "../utils/createToken.js";
+import {generateAccessToken} from "../utils/createToken.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import mongoose from "../config/mongoose.js";
@@ -260,33 +260,35 @@ export const SignUp = asyncHandler(async (req, res) => {
   }
 });
 
-
 export const forgotPasswordCtrl = asyncHandler(async (req, res) => {
-  // Check if the user exists
-  const user = await Account.findOne({ email: req.body.email });
-  if (!user) {
-    res.status(401).json({
+  const account = await Account.findOne({ email: req.body.email });
+  if (!account) {
+    return res.status(401).json({
       status: "failed",
-      message: "Not found your. Please check your email!.",
+      message: "Account not found. Please check your email!",
     });
   }
-  // Create a JWT token for password reset
+
   const resetToken = jwt.sign(
-    { resetToken: user._id },
-    process.env.JWT_ACCESS_SECRET, // You can use a separate secret for password reset if needed
-    { expiresIn: "10m" } // Token will expire in 10 minutes
+    { resetToken: account._id },
+    process.env.JWT_RESET_PASSWORD_SECRET,
+    { expiresIn: "10m" }
   );
 
-  // Generate reset URL with the JWT token
+  // Lưu token và thời gian hết hạn
+  account.resetPasswordToken = resetToken;
+  account.resetPasswordExpires = Date.now() + 10 * 60 * 1000; // 10 phút
+
+  await account.save();
+
   const resetURL = `${req.protocol}://${req.get(
     "host"
-  )}/account/reset-password/${resetToken}`;
+  )}/services/reset-password/${resetToken}`;
   const message = `Forgot your password? Click this link to reset it: ${resetURL}`;
 
   try {
-    // Send the email
     await sendEmail({
-      email: user.email,
+      email: account.email,
       subject: "Your Password Reset Token (valid for 10 minutes)",
       message,
     });
@@ -298,38 +300,51 @@ export const forgotPasswordCtrl = asyncHandler(async (req, res) => {
   } catch (err) {
     res.status(500).json({
       status: "failed",
-      message: err.message,
+      message: "Failed to send email. Please try again later.",
     });
   }
 });
 
 export const resetPasswordCtrl = asyncHandler(async (req, res) => {
   const { token } = req.params;
+  const { password, confirmPassword } = req.body;
+
+  if (password !== confirmPassword) {
+    return res.status(400).json({
+      success: false,
+      message: "Passwords do not match.",
+    });
+  }
 
   try {
-    // Verify the token
-    const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_RESET_PASSWORD_SECRET);
 
-    // Find the associated account using the user's email
-    const account = await Account.findById(decoded.resetToken);
+    const account = await Account.findOne({
+      _id: decoded.resetToken,
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() }, // Kiểm tra thời hạn của token
+    });
+
     if (!account) {
       return res
-        .status(404)
-        .json({ success: false, message: "Account not found" });
+        .status(400)
+        .json({ success: false, message: "Token is invalid or has expired" });
     }
 
-    // Set the new password in the Account model
     const salt = await bcrypt.genSalt(10);
-    account.password = await bcrypt.hash(req.body.password, salt);
+    account.password = await bcrypt.hash(password, salt);
 
-    // Save the updated account
+    // Xóa token sau khi sử dụng
+    account.resetPasswordToken = undefined;
+    account.resetPasswordExpires = undefined;
+
     await account.save();
+    const accessToken = generateAccessToken(account._id);
 
-    // Send response without returning the password
     res.status(200).json({
       status: "success",
       message: "Password reset successful!",
-      token: generateAccessToken(account._id),
+      token: accessToken,
     });
   } catch (err) {
     if (err.name === "TokenExpiredError") {
@@ -339,7 +354,6 @@ export const resetPasswordCtrl = asyncHandler(async (req, res) => {
     } else if (err.name === "JsonWebTokenError") {
       return res.status(401).json({ success: false, message: "Invalid token" });
     }
-
-    res.status(500).json({ success: false, message: "Something error" });
+    res.status(500).json({ success: false, message: err.message });
   }
 });

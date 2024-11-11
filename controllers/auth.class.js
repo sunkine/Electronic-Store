@@ -15,11 +15,17 @@ export const SignIn = async (req, res) => {
     if (!account) {
       return res.status(404).json({
         success: false,
-        message: "Email not found.",
+        message: "Email or password is incorrect.",
       });
     }
-    const user = await User.findOne({email: req.body.email})
-    const cart = await Cart.findOne({idAccount: account._id})
+
+    if (!account.isActive) {
+      return res.status(401).json({
+        success: false,
+        message:
+          "Your account has been disabled. Please contact the administrator.",
+      });
+    }
 
     const isPasswordValid = await bcrypt.compare(
       req.body.password,
@@ -29,29 +35,32 @@ export const SignIn = async (req, res) => {
     if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
-        message: "Incorrect email or password.",
+        message: "Email or password is incorrect.",
       });
     }
 
-    if (!account.isActive) {
-      return res.status(401).json({
+    const user = await User.findOne({ email: req.body.email });
+    const cart = await Cart.findOne({ idAccount: account._id });
+
+    if (!user || !cart) {
+      return res.status(404).json({
         success: false,
-        message: "Your account have been disable. Please contact the administrator to active your account.",
+        message: "Associated user or cart not found.",
       });
     }
 
     const { password: pwHash, ...userDetails } = account._doc;
 
-    // Create JWT token
+    // Generate JWT tokens
     const accessToken = generateAccessToken(account._id);
     const refreshToken = generateRefreshToken(account._id);
 
     res
       .cookie("refreshToken", refreshToken, {
         httpOnly: true,
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
-        secure: process.env.NODE_ENV === "production", // Chỉ gửi cookie qua HTTPS trong môi trường production
-        sameSite: "strict", // Chỉ gửi cookie trong cùng một domain
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        secure: process.env.NODE_ENV === "production", // Only use HTTPS in production
+        sameSite: "strict",
       })
       .status(200)
       .json({
@@ -63,7 +72,7 @@ export const SignIn = async (req, res) => {
         idCart: cart._id,
       });
   } catch (error) {
-    console.error(error); 
+    console.error(error);
     return res.status(500).json({
       success: false,
       message: "Internal server error.",
@@ -100,7 +109,10 @@ export const verifyEmail = asyncHandler(async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Account successfully verified!",
-      data: account,
+      data: {
+        id: account._id,
+        email: account.email,
+      },
     });
   } catch (err) {
     if (err.name === "TokenExpiredError") {
@@ -113,7 +125,12 @@ export const verifyEmail = asyncHandler(async (req, res) => {
         .json({ success: false, message: "Invalid verification token" });
     }
 
-    res.status(500).json({ success: false, message: err.message });
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "An error occurred during verification.",
+      });
   }
 });
 
