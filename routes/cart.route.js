@@ -14,6 +14,6 @@ router.get("/", getAllCart);
 router.get("/:id", isLoggedin, getCartById);
 router.post("/", isLoggedin, addToCart);
 router.put("/:id", isLoggedin, updateCart)
-router.delete("/", isLoggedin, deleteFromCart);
+router.delete("/:id", isLoggedin, deleteFromCart);
 
 export default router;
