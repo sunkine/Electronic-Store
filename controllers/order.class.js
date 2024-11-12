@@ -5,58 +5,75 @@ import CryptoJS from "crypto-js";
 import configPayment from "../config/configPayment.js";
 import moment from "moment";
 import qs from "qs";
+import jwt from "jsonwebtoken"
 
+// Function để tạo link thanh toán
+export const createPaymentLink = (orderId, totalPrice, products) => {
+  const baseUrl = process.env.JWT_PAYMENT; // URL cơ bản của bạn
+  return `${baseUrl}/payment?orderId=${orderId}&totalPrice=${totalPrice}&products=${encodeURIComponent(JSON.stringify(products))}`;
+};
+
+// Controller tạo đơn hàng
 export const createOrder = async (req, res) => {
   const _id = req.userAuthId;
   try {
     // Lấy thông tin giỏ hàng của người dùng
-    const cart = await Cart.findOne({ idAccount: _id }).populate(
-      "products.idProduct"
-    );
+    const cart = await Cart.findOne({ idAccount: _id }).populate("products.idProduct");
     if (!cart || cart.products.length === 0) {
       return res.status(404).json({ success: false, message: "Cart is empty" });
     }
+    const productIds = req.body.products.map((item) => item.idProduct);
 
     // Tính tổng tiền đơn hàng
-    const totalPrice = cart.products.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0
-    );
+    const totalPrice = cart.products.reduce((sum, item) => {
+      if (productIds.includes(item.idProduct._id.toString())) {
+        return sum + item.price * item.quantity;
+      }
+      return sum;
+    }, 0);
+
+    // Kiểm tra phương thức thanh toán và tạo link nếu cần
+    let linkPayment = null;
+    if (req.body.payment_method === "Bank") {
+      linkPayment = createPaymentLink(req.body._id, totalPrice, req.body.products);
+    }
+
     // Tạo đơn hàng mới
     const order = new Order({
       idCustomer: _id,
-      nameCustomer: req.body.nameCustomer,
+      nameOfCustomer: req.body.nameOfCustomer,
       phone: req.body.phone,
       address: req.body.address,
       dateOrder: new Date(),
-      dateReceived: req.body.dateReceived || null, // Ngày nhận hàng có thể tùy chọn
+      dateReceived: req.body.dateReceived || null,
       totalPrice,
       payment_method: req.body.payment_method || "Cash",
       isPayment: req.body.isPayment || false,
-      idCart: cart._id,
-      status: req.body.status || "Chờ thanh toán",
+      products: req.body.products,
+      status: req.body.status || "Chờ xác nhận",
+      linkPayment, // Lưu linkPayment vào đơn hàng
     });
 
     // Lưu đơn hàng vào cơ sở dữ liệu
     await order.save();
 
-    // Lọc ra các sản phẩm đã mua khỏi giỏ hàng
-    const purchasedProductIds = cart.products.map((item) => item.idProduct._id);
+    // Xóa các sản phẩm đã mua khỏi giỏ hàng
     cart.products = cart.products.filter(
-      (item) => !purchasedProductIds.includes(item.idProduct._id)
+      (item) => !productIds.includes(item.idProduct._id.toString())
     );
-    // cart.products = []
-    cart.isOrder = false;
     await cart.save();
 
-    res
-      .status(201)
-      .json({ success: true, message: "Order created successfully", order });
+    res.status(201).json({
+      success: true,
+      message: "Order created successfully",
+      data: order,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 export const getAllOrder = async (req, res) => {
   const page = parseInt(req.query.page);
@@ -106,7 +123,6 @@ catch (error) {
   }
 }
 
-
 export const deleteOrder = async (req, res) => {
   try {
     const id = req.params.id;
@@ -126,17 +142,17 @@ export const deleteOrder = async (req, res) => {
 };
 
 export const updateOrder = async (req, res) => {
-  const id = req.params.id;
+  const idOrder = req.params.id;
   try {
-    const idOrder = await Order.findByIdAndUpdate(
-      id,
+    const order = await Order.findByIdAndUpdate(
+      idOrder,
       {
         $set: req.body,
       },
       { new: true }
     );
 
-    if (!idOrder) {
+    if (!order) {
       return res
         .status(404)
         .json({ success: false, message: "Order not found." });
@@ -144,7 +160,7 @@ export const updateOrder = async (req, res) => {
       res.status(200).json({
         success: true,
         messgae: "Successfully updated.",
-        data: idOrder,
+        data: order,
       });
     }
   } catch (error) {
@@ -172,7 +188,7 @@ export const payment = async (req, res) => {
     amount: orderInfo.totalPrice,
     description: `Payment for the order #${transID}`,
     bank_code: "",
-    callback_url: "https://66eb-2402-800-62a6-f9c3-858b-ae14-e2e5-f7ee.ngrok-free.app/services/callback",
+    callback_url: "https://448a-2402-800-63a3-ff6a-d1e5-499b-9ba9-fbbc.ngrok-free.app/services/callback",
   };
 
   // appid|app_trans_id|appuser|amount|apptime|embeddata|item
@@ -225,7 +241,7 @@ export const callback = async (req, res) => {
 
       await Order.findOneAndUpdate(
         { _id: dataJson["app_user"] },
-        { status: "Thanh toán thành công" }
+        { isPayment: true }
       );
       console.log(
         "update order's status = success where app_trans_id =",
