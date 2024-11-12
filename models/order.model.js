@@ -37,10 +37,24 @@ const orderModel = new mongoose.Schema({
         type: Boolean,
         default: false,
     },
-    idCart: {
-        type: mongoose.SchemaTypes.ObjectId,
-        ref: "Cart",
-    },
+    products: [
+        {
+          idProduct: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Product",
+          },
+          nameOfProduct: {
+            type: String,
+          },
+          quantity: {
+            type: Number,
+            default: 1,
+          },
+          price: {
+            type: Number,
+          },
+        },
+      ],
     status: {
         type: String,
         required: true,
