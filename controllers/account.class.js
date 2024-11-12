@@ -70,32 +70,32 @@ export const disableAccount = async (req, res) => {
 export const deleteAccount = async (req, res) => {
   try {
     const id = req.params.id;
-    const account = await Account.findByIdAndDelete(id);
-    const user = await User.findOneAndDelete({ idAccount: id });
-    const cart = await Cart.findOneAndDelete({ idAccount: id });
-    if (!account) {
-      res.status(404).json({ success: false, message: "Account not found." });
+
+    // Start deleting the account, user, and cart in parallel to optimize performance
+    const deleteAccount = Account.findByIdAndDelete(id);
+    const deleteUser = User.findOneAndDelete({ idAccount: id });
+    const deleteCart = Cart.findOneAndDelete({ idAccount: id });
+
+    const [account, user, cart] = await Promise.all([deleteAccount, deleteUser, deleteCart]);
+
+    // Check if any of the deletions failed and return a response accordingly
+    if (!account || !user || !cart) {
+      return res.status(404).json({
+        success: false,
+        message: "One or more items (account, user, or cart) were not found.",
+      });
     }
 
-    if (!user) {
-      res
-        .status(404)
-        .json({ success: false, message: "User with this account not found." });
-    }
-
-    if (!cart) {
-      res
-        .status(404)
-        .json({ success: false, message: "Cart with this account not found." });
-    }
-
+    // All deletions were successful
     res.status(200).json({
       success: true,
-      message: "Successfully delete account, user and cart.",
+      message: "Successfully deleted account, user, and cart.",
       dataAccount: account,
       dataUser: user,
+      dataCart: cart,
     });
   } catch (error) {
+    // Handle unexpected errors
     res.status(500).json({ success: false, message: error.message });
   }
 };
