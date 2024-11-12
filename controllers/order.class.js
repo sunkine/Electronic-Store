@@ -7,51 +7,58 @@ import moment from "moment";
 import qs from "qs";
 
 export const createOrder = async (req, res) => {
-  const _id = req.userAuthId;
+  const userId = req.userAuthId;
   try {
     // Lấy thông tin giỏ hàng của người dùng
-    const cart = await Cart.findOne({ idAccount: _id }).populate(
+    const cart = await Cart.findOne({ idAccount: userId }).populate(
       "products.idProduct"
     );
     if (!cart || cart.products.length === 0) {
       return res.status(404).json({ success: false, message: "Cart is empty" });
     }
 
+    const productIds = req.body.products.map((item) => item.idProduct);
+
     // Tính tổng tiền đơn hàng
-    const totalPrice = cart.products.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0
-    );
+    const totalPrice = cart.products.reduce((sum, item) => {
+      if (productIds.includes(item.idProduct._id.toString())) {
+        return sum + item.price * item.quantity;
+      }
+      return sum;
+    }, 0);
+
+    // Chuyển sản phẩm từ giỏ hàng vào đơn hàng
+    
+
     // Tạo đơn hàng mới
     const order = new Order({
-      idCustomer: _id,
+      idCustomer: userId,
       nameCustomer: req.body.nameCustomer,
       phone: req.body.phone,
       address: req.body.address,
       dateOrder: new Date(),
-      dateReceived: req.body.dateReceived || null, // Ngày nhận hàng có thể tùy chọn
+      dateReceived: req.body.dateReceived || null,
       totalPrice,
       payment_method: req.body.payment_method || "Cash",
       isPayment: req.body.isPayment || false,
-      idCart: cart._id,
+      products: req.body.products,
       status: req.body.status || "Chờ thanh toán",
     });
 
     // Lưu đơn hàng vào cơ sở dữ liệu
     await order.save();
 
-    // Lọc ra các sản phẩm đã mua khỏi giỏ hàng
-    const purchasedProductIds = cart.products.map((item) => item.idProduct._id);
+    // Xóa các sản phẩm đã mua khỏi giỏ hàng
     cart.products = cart.products.filter(
-      (item) => !purchasedProductIds.includes(item.idProduct._id)
+      (item) => !productIds.includes(item.idProduct._id.toString())
     );
-    // cart.products = []
-    cart.isOrder = false;
     await cart.save();
 
-    res
-      .status(201)
-      .json({ success: true, message: "Order created successfully", order });
+    res.status(201).json({
+      success: true,
+      message: "Order created successfully",
+      data: order,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: error.message });

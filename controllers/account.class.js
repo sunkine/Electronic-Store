@@ -203,6 +203,7 @@ export const SignUp = asyncHandler(async (req, res) => {
     }
 
     const user = new User({
+      name:username,
       email,
       idAccount: savedAccount._id,
     });
