@@ -17,15 +17,15 @@ export const createOrder = async (req, res) => {
     if (!cart || cart.products.length === 0) {
       return res.status(404).json({ success: false, message: "Cart is empty" });
     }
-    // const productIds = req.body.products.map((item) => item.idProduct);
+    const productIds = req.body.products.map((item) => item.idProduct);
 
     // // Tính tổng tiền đơn hàng
-    // const totalPrice = cart.products.reduce((sum, item) => {
-    //   if (productIds.includes(item.idProduct._id.toString())) {
-    //     return sum + item.price * item.quantity;
-    //   }
-    //   return sum;
-    // }, 0);
+    const totalPrice = cart.products.reduce((sum, item) => {
+      if (productIds.includes(item.idProduct._id.toString())) {
+        return sum + item.price * item.quantity;
+      }
+      return sum;
+    }, 0);
 
     // Kiểm tra phương thức thanh toán và tạo link nếu cần
     
@@ -37,7 +37,7 @@ export const createOrder = async (req, res) => {
       address: req.body.address,
       dateOrder: new Date(),
       dateReceived: req.body.dateReceived || null,
-      totalPrice: req.body.totalPrice || 0,
+      totalPrice,
       payment_method: req.body.payment_method || "Cash",
       isPayment: req.body.isPayment || false,
       products: req.body.products,
@@ -50,7 +50,7 @@ export const createOrder = async (req, res) => {
     
     if (req.body.payment_method === "Bank") {
       const paymentToken = jwt.sign(
-        { _id, idOrder: order._id, totalPrice: req.body.totalPrice, products: req.body.products },
+        { _id, idOrder: order._id, totalPrice, products: req.body.products },
         process.env.JWT_PAYMENT,
         { expiresIn: '1h' }
       );
@@ -62,9 +62,9 @@ export const createOrder = async (req, res) => {
     }
 
     // Xóa các sản phẩm đã mua khỏi giỏ hàng
-    // cart.products = cart.products.filter(
-    //   (item) => !productIds.includes(item.idProduct._id.toString())
-    // );
+    cart.products = cart.products.filter(
+      (item) => !productIds.includes(item.idProduct._id.toString())
+    );
     cart.products = []
     await cart.save();
 

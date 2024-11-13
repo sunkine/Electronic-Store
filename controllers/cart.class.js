@@ -70,7 +70,7 @@ export const deleteFromCart = async (req, res) => {
 
   try {
       // Find the cart by idCart
-      const cart = await Cart.findById({idCart});
+      const cart = await Cart.findById(idCart);
       if (!cart) {
           return res.status(404).json({ success: false, message: "Cart not found" });
       }
@@ -184,7 +184,7 @@ export const updateCart = async (req, res) => {
     // Tìm giỏ hàng theo id
     const cart = await Cart.findById(id);
     if (!cart) {
-      return res.status(404).json({ success: false, message: "Cart not found" });
+        return res.status(404).json({ success: false, message: "Cart not found" });
     }
 
     // Tìm sản phẩm trong giỏ hàng dựa trên productId
@@ -197,7 +197,7 @@ export const updateCart = async (req, res) => {
     }
 
     // Cập nhật số lượng sản phẩm, đảm bảo số lượng tối thiểu là 1
-    const newQuantity = Number(cart.products[productIndex].quantity) + Number(quantity);
+    const newQuantity = Number(quantity);
     cart.products[productIndex].quantity = Math.max(1, newQuantity);
 
     // Lưu lại giỏ hàng
