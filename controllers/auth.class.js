@@ -8,6 +8,7 @@ import asyncHandler from "express-async-handler";
 import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
 import Cart from "../models/cart.model.js";
+import Order from "../models/order.model.js";
 
 export const SignIn = async (req, res) => {
   try {
@@ -159,4 +160,42 @@ export const refreshAccessToken = (req, res) => {
       accessToken: newAccessToken,
     });
   });
+};
+
+// Endpoint xác nhận thanh toán
+export const verifyPayment = async (req, res) => {
+  try {
+    // Lấy token từ query parameters
+    const { token } = req.params;
+    if (!token) {
+      return res.status(400).json({ success: false, message: "Missing token" });
+    }
+
+    // Giải mã token để lấy thông tin đơn hàng
+    const decoded = jwt.verify(token, process.env.JWT_PAYMENT);
+    const { idOrder } = decoded;
+
+    // Tìm đơn hàng với idOrder và userId
+    const order = await Order.findById(idOrder);
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Order not found" });
+    }
+
+    // Cập nhật trạng thái isPayment thành true
+    order.isPayment = true;
+    order.linkPayment = null; // Xóa linkPayment sau khi thanh toán thành công
+    await order.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Payment verified successfully",
+      data: order,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: error.name === "JsonWebTokenError" ? "Invalid token" : error.message,
+    });
+  }
 };

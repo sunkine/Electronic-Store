@@ -1,67 +1,73 @@
-import mongoose from "../config/mongoose.js"
+import mongoose from "../config/mongoose.js";
 
 const orderModel = new mongoose.Schema({
-    idCustomer: {
+  idCustomer: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Account",
+  },
+  nameOfCustomer: {
+    type: String,
+    required: true,
+  },
+  phone: {
+    type: String,
+    required: true,
+  },
+  address: {
+    type: String,
+    required: true,
+  },
+  dateOrder: {
+    type: Date,
+    default: Date.now,
+  },
+  dateReceived: {
+    type: Date,
+  },
+  totalPrice: {
+    type: Number,
+  },
+  payment_method: {
+    type: String,
+    enum: ["Bank", "Cash", "Cod"],
+    default: "Cash",
+  },
+  isPayment: {
+    type: Boolean,
+    default: false,
+  },
+  products: [
+    {
+      idProduct: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Account",
-    },
-    nameCustomer: {
+        ref: "Product",
+      },
+      nameOfProduct: {
         type: String,
-        required: true,
-    },
-    phone: {
-        type: String,
-        required: true,
-    },
-    address: {
-        type: String,
-        required: true,
-    },
-    dateOrder: {
-        type: Date,
-        default: Date.now,
-    },
-    dateReceived: {
-        type: Date,
-    },
-    totalPrice: {
+      },
+      quantity: {
         type: Number,
+        default: 1,
+      },
+      price: {
+        type: Number,
+      },
+    },
+  ],
+  status: {
+    type: String,
+    enum: [
+      "Chờ xác nhận",
+      "Chờ lấy hàng",
+      "Đang vận chuyển",
+      "Đang giao",
+      "Đã giao",
+      "Đã hủy",
+    ],
+    default: "Chờ xác nhận",
+  },
+  linkPayment: {type: String}
+});
 
-    },
-    payment_method: {
-        type: String,
-        enum: ["Momo","Cash"],
-        default: "Cash",
-    },
-    isPayment: {
-        type: Boolean,
-        default: false,
-    },
-    products: [
-        {
-          idProduct: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Product",
-          },
-          nameOfProduct: {
-            type: String,
-          },
-          quantity: {
-            type: Number,
-            default: 1,
-          },
-          price: {
-            type: Number,
-          },
-        },
-      ],
-    status: {
-        type: String,
-        required: true,
-        enum: ["Chờ thanh toán", "Đã thanh toán"],
-        default: "Chờ thanh toán",
-    },
-})
-
-const Order = mongoose.model("Order", orderModel)
+const Order = mongoose.model("Order", orderModel);
 export default Order;
