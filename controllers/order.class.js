@@ -7,37 +7,28 @@ import moment from "moment";
 import qs from "qs";
 import jwt from "jsonwebtoken"
 
-// Function để tạo link thanh toán
-export const createPaymentLink = (orderId, totalPrice, products) => {
-  const baseUrl = process.env.JWT_PAYMENT; // URL cơ bản của bạn
-  return `${baseUrl}/payment?orderId=${orderId}&totalPrice=${totalPrice}&products=${encodeURIComponent(JSON.stringify(products))}`;
-};
-
 // Controller tạo đơn hàng
 export const createOrder = async (req, res) => {
   const _id = req.userAuthId;
+  let linkPayment = null;
   try {
     // Lấy thông tin giỏ hàng của người dùng
     const cart = await Cart.findOne({ idAccount: _id }).populate("products.idProduct");
     if (!cart || cart.products.length === 0) {
       return res.status(404).json({ success: false, message: "Cart is empty" });
     }
-    const productIds = req.body.products.map((item) => item.idProduct);
+    // const productIds = req.body.products.map((item) => item.idProduct);
 
-    // Tính tổng tiền đơn hàng
-    const totalPrice = cart.products.reduce((sum, item) => {
-      if (productIds.includes(item.idProduct._id.toString())) {
-        return sum + item.price * item.quantity;
-      }
-      return sum;
-    }, 0);
+    // // Tính tổng tiền đơn hàng
+    // const totalPrice = cart.products.reduce((sum, item) => {
+    //   if (productIds.includes(item.idProduct._id.toString())) {
+    //     return sum + item.price * item.quantity;
+    //   }
+    //   return sum;
+    // }, 0);
 
     // Kiểm tra phương thức thanh toán và tạo link nếu cần
-    let linkPayment = null;
-    if (req.body.payment_method === "Bank") {
-      linkPayment = createPaymentLink(req.body._id, totalPrice, req.body.products);
-    }
-
+    
     // Tạo đơn hàng mới
     const order = new Order({
       idCustomer: _id,
@@ -46,21 +37,35 @@ export const createOrder = async (req, res) => {
       address: req.body.address,
       dateOrder: new Date(),
       dateReceived: req.body.dateReceived || null,
-      totalPrice,
+      totalPrice: req.body.totalPrice || 0,
       payment_method: req.body.payment_method || "Cash",
       isPayment: req.body.isPayment || false,
       products: req.body.products,
       status: req.body.status || "Chờ xác nhận",
       linkPayment, // Lưu linkPayment vào đơn hàng
     });
-
+    
     // Lưu đơn hàng vào cơ sở dữ liệu
     await order.save();
+    
+    if (req.body.payment_method === "Bank") {
+      const paymentToken = jwt.sign(
+        { _id, idOrder: order._id, totalPrice: req.body.totalPrice, products: req.body.products },
+        process.env.JWT_PAYMENT,
+        { expiresIn: '1h' }
+      );
+      linkPayment = `${req.protocol}://${req.get("host")}/auth/verify-payment/${paymentToken}`;
+
+      // Cập nhật linkPayment vào đơn hàng
+      order.linkPayment = linkPayment;
+      await order.save();
+    }
 
     // Xóa các sản phẩm đã mua khỏi giỏ hàng
-    cart.products = cart.products.filter(
-      (item) => !productIds.includes(item.idProduct._id.toString())
-    );
+    // cart.products = cart.products.filter(
+    //   (item) => !productIds.includes(item.idProduct._id.toString())
+    // );
+    cart.products = []
     await cart.save();
 
     res.status(201).json({
@@ -73,7 +78,6 @@ export const createOrder = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-
 
 export const getAllOrder = async (req, res) => {
   const page = parseInt(req.query.page);
