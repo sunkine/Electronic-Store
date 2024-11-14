@@ -15,9 +15,6 @@ export const createWarehouseItem = async (req, res) => {
       data: newWarehouseItem,
     });
   } catch (error) {
-    if (error.name === 'MongoError' && error.code === 11000) {
-      return res.status(400).json({ success: false, message: "Sản phẩm đã tồn tại." });
-    }
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -74,26 +71,23 @@ export const deleteWarehouseItemByID = async (req, res) => {
   }
 };
 
-// Lấy tất cả sản phẩm
+// Lấy danh sách tất cả sản phẩm trong kho
 export const getAllWarehouseItems = async (req, res) => {
-  const page = parseInt(req.query.page) || 0;
   try {
-    const warehouseItems = await Warehouse
-      .find({})
-      .limit(10)
-      .skip(page * 10);
+    const warehouseItems = await Warehouse.find({}); // Fetch all items without pagination
 
-    // Update this part to return success even if the array is empty
+    // Return success message even if the array is empty
     res.status(200).json({
       success: true,
-      message: "Lấy tất cả sản phẩm thành công.",
-      total: warehouseItems.length,
-      data: warehouseItems,
+      message: "Lấy tất cả sản phẩm trong kho thành công.",
+      total: warehouseItems.length, // Total number of warehouse items
+      data: warehouseItems, // Return all warehouse items
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 // Lấy thông tin một sản phẩm theo ID
 export const getWarehouseItem = async (req, res) => {

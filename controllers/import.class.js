@@ -1,76 +1,98 @@
 import Import from "../models/import.model.js"; 
-import Counter from "../models/counter.model.js"; 
 import Warehouse from "../models/warehouse.model.js"; 
+import mongoose from 'mongoose';
 
-// Create new import item and add it to the warehouse
+// Create a new import item and update warehouse stock
 export const createImportItem = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  
   try {
-    // Increment the counter for unique idImport
-    const counter = await Counter.findOneAndUpdate(
-      { _id: 'importId' },
-      { $inc: { seq: 1 } },
-      { new: true, upsert: true }
-    );
+    const { idProduct, nameOfProduct, quantity, priceImport, idProvider, nameOfProvider } = req.body;
 
-    const idImport = `IP${counter.seq.toString().padStart(3, '0')}`;
-
-    // Create the new import item with idImport and current date
-    const newImportItem = new Import({
-      ...req.body,
-      idImport,
-      dateImport: new Date() // Explicitly set current date if needed
-    });
-
-    await newImportItem.save(); // Save the import item
-
-    // Extract fields for the warehouse entry
-    const { idProduct, nameOfProduct, quantity, idProvider, nameOfProvider } = req.body;
-
-    // Check if the product already exists in the warehouse
-    const existingProduct = await Warehouse.findOne({ idProduct });
+    // Kiểm tra nếu sản phẩm đã tồn tại trong kho
+    const existingProduct = await Warehouse.findOne({ idProduct }).session(session);
+    
+    // Nếu sản phẩm chưa có trong kho, tạo mới item trong kho
     if (!existingProduct) {
-      // If product doesn't exist, add it to the warehouse
       const newWarehouseItem = new Warehouse({
         idProduct,
         nameOfProduct,
         quantity,
         idProvider,
-        nameOfProvider
+        nameOfProvider,
       });
-      await newWarehouseItem.save();
+      await newWarehouseItem.save({ session });
     } else {
-      // If product exists, just update the quantity
+      // Nếu sản phẩm đã có trong kho, cập nhật số lượng
       await Warehouse.findOneAndUpdate(
         { idProduct },
-        { $inc: { quantity: quantity } },
-        { new: true }
+        { $inc: { quantity } },  // Tăng số lượng sản phẩm trong kho
+        { new: true, session }
       );
     }
 
+    // Tạo mới mục nhập import
+    const newImportItem = new Import({
+      idProduct,
+      nameOfProduct,
+      quantity,
+      priceImport,
+      idProvider,
+      nameOfProvider,
+      dateImport: new Date(),
+    });
+    
+    // Lưu mục nhập import
+    await newImportItem.save({ session });
+
+    // Kiểm tra và cập nhật kho (nếu cần)
+    const existingProductInWarehouse = await Warehouse.findOne({ idProduct }).session(session);
+    if (!existingProductInWarehouse) {
+      // Thêm sản phẩm vào kho nếu không tồn tại
+      const newWarehouseItem = new Warehouse({
+        idProduct,
+        nameOfProduct,
+        quantity,
+        idProvider,
+        nameOfProvider,
+      });
+      await newWarehouseItem.save({ session });
+    } else {
+      // Cập nhật số lượng sản phẩm trong kho nếu sản phẩm đã tồn tại
+      await Warehouse.findOneAndUpdate(
+        { idProduct },
+        { $inc: { quantity } }, // Tăng số lượng
+        { new: true, session }
+      );
+    }
+
+    // Cam kết giao dịch
+    await session.commitTransaction();
+    session.endSession();
+
     res.status(201).json({
       success: true,
-      message: "Tạo sản phẩm nhập khẩu thành công và đã cập nhật kho.",
+      message: "Tạo sản phẩm nhập khẩu thành công và cập nhật kho.",
       data: newImportItem,
     });
   } catch (error) {
-    if (error.name === 'MongoError' && error.code === 11000) {
-      return res.status(400).json({ success: false, message: "Sản phẩm nhập khẩu đã tồn tại." });
-    }
+    // Rollback giao dịch nếu có lỗi
+    await session.abortTransaction();
+    session.endSession();
+
+    console.error("Error creating import:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// Cập nhật sản phẩm nhập khẩu theo ID
+// Cập nhật sản phẩm nhập khẩu theo _id
 export const updateImportItemByID = async (req, res) => {
   try {
-    const idImport = req.params.id;
+    const { id } = req.params;
     const updatedData = { ...req.body };
 
-    const updatedImportItem = await Import.findOneAndUpdate(
-      { idImport },
-      updatedData,
-      { new: true }
-    );
+    const updatedImportItem = await Import.findByIdAndUpdate(id, updatedData, { new: true });
 
     if (!updatedImportItem) {
       return res.status(404).json({
@@ -89,67 +111,52 @@ export const updateImportItemByID = async (req, res) => {
   }
 };
 
-// Xóa sản phẩm nhập khẩu theo ID
+// Xóa sản phẩm nhập khẩu theo _id
 export const deleteImportItemByID = async (req, res) => {
-    try {
-      const { id } = req.params;
-      const deletedImportItem = await Import.findOneAndDelete({ idImport: id });
-  
-      if (!deletedImportItem) {
-        return res.status(404).json({
-          success: false,
-          message: "Sản phẩm nhập khẩu không tìm thấy.",
-        });
-      }
-  
-      // Kiểm tra xem có phải đã xóa hết các sản phẩm nhập khẩu không
-      const remainingImports = await Import.countDocuments({});
-      
-      if (remainingImports === 0) {
-        // Nếu không còn sản phẩm nhập khẩu, reset counter về 1
-        await Counter.findOneAndUpdate(
-          { _id: 'importId' },  // Tìm bộ đếm với id 'importId'
-          { $set: { seq: 1 } },  // Reset seq về 1
-          { new: true, upsert: true }  // Tạo mới nếu không tồn tại
-        );
-      }
-  
-      res.status(200).json({
-        success: true,
-        message: "Sản phẩm nhập khẩu đã được xóa thành công.",
-        data: deletedImportItem,
-      });
-    } catch (error) {
-      res.status(500).json({ success: false, message: error.message });
-    }
-  };
-  
-
-// Lấy tất cả sản phẩm nhập khẩu
-export const getAllImportItems = async (req, res) => {
-  const page = parseInt(req.query.page) || 0;
   try {
-    const importItems = await Import
-      .find({})
-      .limit(10)
-      .skip(page * 10);
+    const { id } = req.params;
+    const deletedImportItem = await Import.findByIdAndDelete(id);
+
+    if (!deletedImportItem) {
+      return res.status(404).json({
+        success: false,
+        message: "Sản phẩm nhập khẩu không tìm thấy.",
+      });
+    }
 
     res.status(200).json({
       success: true,
-      message: "Lấy tất cả sản phẩm nhập khẩu thành công.",
-      total: importItems.length,
-      data: importItems,
+      message: "Xóa sản phẩm nhập khẩu thành công.",
+      data: deletedImportItem,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// Lấy thông tin một sản phẩm nhập khẩu theo ID
+// Lấy danh sách tất cả sản phẩm nhập khẩu
+// Lấy danh sách tất cả sản phẩm nhập khẩu
+export const getAllImportItems = async (req, res) => {
+  try {
+    const importItems = await Import.find({}); // No pagination, fetch all items
+
+    res.status(200).json({
+      success: true,
+      message: "Lấy danh sách sản phẩm nhập khẩu thành công.",
+      total: importItems.length, // Total number of import items
+      data: importItems, // Return all import items
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
+// Lấy chi tiết sản phẩm nhập khẩu theo _id
 export const getImportItem = async (req, res) => {
   try {
-    const id = req.params.id;
-    const importItem = await Import.findOne({ idImport: id });
+    const { id } = req.params;
+    const importItem = await Import.findById(id);
 
     if (!importItem) {
       return res.status(404).json({ success: false, message: "Sản phẩm nhập khẩu không tìm thấy." });
@@ -167,11 +174,11 @@ export const getImportItem = async (req, res) => {
 
 // Tìm kiếm sản phẩm nhập khẩu
 export const listImportItemSearch = async (req, res) => {
-  const { name, idImport } = req.query;
+  const { name, idProduct } = req.query;
   let filters = {};
 
-  if (name) filters.nameOfImport = { $regex: name, $options: "i" };
-  if (idImport) filters.idImport = { $regex: idImport, $options: "i" };
+  if (name) filters.nameOfProduct = { $regex: name, $options: "i" };
+  if (idProduct) filters.idProduct = { $regex: idProduct, $options: "i" };
 
   try {
     const importItems = await Import.find(filters);

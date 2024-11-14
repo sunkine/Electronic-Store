@@ -18,7 +18,6 @@ const wareouseModel = new mongoose.Schema({
   idProvider: {
     type: String,
     required: true,
-    unique: true,
   },
   nameOfProvider: {
     type: String,

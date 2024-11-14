@@ -8,6 +8,4 @@ router.get('/', getAllProviders);
 router.post('/', createProvider); 
 router.put('/:id', updateProviderByID);
 router.delete('/:id', deleteProviderByID);
-router.post('/search', listProviderSearch);
-
 export default router;

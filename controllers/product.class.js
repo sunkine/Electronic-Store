@@ -77,11 +77,10 @@ export const updateProductByID = async (req, res) => {
 
 export const deleteProductByID = async (req, res) => {
   try {
-    const { id } = req.params; // Lấy id từ params
-    const deletedProduct = await Product.findOneAndDelete({ idProduct: id }); // Xóa sản phẩm theo idProduct
-    const deleteDetailProduct = await detailProduct.findOneAndDelete({
-      idProduct: id,
-    }); //Xóa detail product theo id Product
+    const { id } = req.params; // Lấy _id từ params
+
+    // Xóa sản phẩm theo _id
+    const deletedProduct = await Product.findByIdAndDelete(id);
 
     if (!deletedProduct) {
       return res.status(404).json({
@@ -89,6 +88,11 @@ export const deleteProductByID = async (req, res) => {
         message: "Product not found.",
       });
     }
+
+    // Xóa chi tiết sản phẩm theo _id sản phẩm
+    const deleteDetailProduct = await detailProduct.findOneAndDelete({
+      idProduct: id,
+    });
 
     if (!deleteDetailProduct) {
       return res.status(404).json({
@@ -108,36 +112,42 @@ export const deleteProductByID = async (req, res) => {
   }
 };
 
+
 export const getAllProducts = async (req, res) => {
-  const { nameOfProduct, typeProduct } = req.query;
-  let query = {};
-
-  if (nameOfProduct)
-    query.nameOfProduct = { $regex: nameOfProduct, $options: "i" };
-  if (typeProduct) query.typeProduct = { $regex: typeProduct, $options: "i" };
-
-  const page = parseInt(req.query.page);
-  const limit = parseInt(req.query.limit || 10);
   try {
-    const product = await Product.find(query)
-      .limit(limit)
-      .skip(page * limit);
-    if (!product) {
+    // Build query if filters are provided in the request
+    const { nameOfProduct, typeProduct } = req.query;
+    let query = {};
+    if (nameOfProduct) {
+      query.nameOfProduct = { $regex: nameOfProduct, $options: "i" };
+    }
+    if (typeProduct) {
+      query.typeProduct = { $regex: typeProduct, $options: "i" };
+    }
+
+    // Fetch all products based on query (no pagination applied)
+    const products = await Product.find(query);
+
+    // Check if no products are found
+    if (!products || products.length === 0) {
       return res
         .status(404)
-        .json({ success: false, message: "Products are empty." });
-    } else {
-      res.status(200).json({
-        success: true,
-        message: "Successfully get all products.",
-        total: product.length,
-        data: product,
-      });
+        .json({ success: false, message: "No products found." });
     }
+
+    // Respond with all matching products
+    res.status(200).json({
+      success: true,
+      message: "Successfully retrieved all products.",
+      total: products.length,
+      data: products,
+    });
   } catch (error) {
+    // Handle errors
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 export const getProduct = async (req, res) => {
   try {
