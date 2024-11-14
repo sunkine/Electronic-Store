@@ -127,6 +127,27 @@ catch (error) {
   }
 }
 
+export const getOrderDetails = async (req, res) => {
+  try {
+    const { _id } = req.body;
+    
+    // Tìm đơn hàng theo idOrder và lấy chi tiết sản phẩm
+    const order = await Order.findById(_id).populate("products.idProduct");
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Order not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Order details fetched successfully",
+      data: order,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 export const deleteOrder = async (req, res) => {
   try {
     const id = req.params.id;
