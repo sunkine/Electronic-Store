@@ -3,6 +3,7 @@ import {
   payment,
   callback,
   checkStatusOrder,
+  getOrderDetails,
 } from "../controllers/order.class.js";
 
 import {
@@ -29,5 +30,8 @@ router.get("/reset-password/:token", resetPasswordCtrl);
 
 //clear cart of account
 router.post("/clear", isLoggedin, clearCart);
+
+//get detail of order
+router.get("/order/detail", getOrderDetails)
 
 export default router;
