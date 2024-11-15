@@ -1,37 +1,26 @@
 import Product from "../models/product.model.js";
 import detailProduct from "../models/detailProduct.model.js";
 
+
 export const createProduct = async (req, res) => {
   try {
-    const productData = req.body; // Dữ liệu sản phẩm từ request body
-    const imagePath = req.file ? req.file.path : ""; // Kiểm tra nếu có tệp hình ảnh được tải lên
+    const productData = req.body;
+    const imageUrl = productData.image || ''; // Get image URL from body if it's sent from frontend
 
-    // Tạo đối tượng sản phẩm mới
+    // If no image URL is sent, fallback to using local upload (if file upload exists)
+    const imagePath = req.file ? req.file.path.replace(/\\/g, "/") : imageUrl;
+
+    // Create a new product object
     const newProduct = new Product({
       ...productData,
-      image: imagePath, // Lưu đường dẫn hình ảnh vào cơ sở dữ liệu
+      image: imagePath, // Store the image URL or path
     });
 
-    // Lưu sản phẩm mới vào cơ sở dữ liệu
-
-    await newProduct.save();
-
-    // Tạo chi tiết sản phẩm mới
-    const newDetailProduct = new detailProduct({
-      idProduct: newProduct._id, // Liên kết với sản phẩm vừa tạo
-      description: productData.detailDescription, // Mô tả chi tiết
-    });
-
-    // Lưu chi tiết sản phẩm vào cơ sở dữ liệu
-    await newDetailProduct.save();
-
-    // Cập nhật lại sản phẩm để liên kết chi tiết
-    newProduct.detail = newDetailProduct._id;
-    await newProduct.save(); // Lưu lại sản phẩm với thông tin chi tiết
+    await newProduct.save(); // Save the new product in the database
 
     res.status(201).json({
       success: true,
-      message: "Tạo sản phẩm thành công.",
+      message: "Product created successfully.",
       data: newProduct,
     });
   } catch (error) {
@@ -39,18 +28,10 @@ export const createProduct = async (req, res) => {
   }
 };
 
-
 export const updateProductByID = async (req, res) => {
   try {
     const idProduct = req.params.id;
-    const updatedData = { ...req.body };
-
-    // If there's a new image file, add its path to updatedData
-    if (req.file) {
-      updatedData.image = req.file.path.replace(/\\/g, "/"); // Adjust path format if necessary
-    }
-
-    console.log("Dữ liệu cập nhật:", updatedData);
+    const updatedData = req.body; 
 
     const updatedProduct = await Product.findOneAndUpdate(
       { idProduct },
@@ -77,11 +58,10 @@ export const updateProductByID = async (req, res) => {
 
 export const deleteProductByID = async (req, res) => {
   try {
-    const { id } = req.params; // Lấy id từ params
-    const deletedProduct = await Product.findOneAndDelete({ idProduct: id }); // Xóa sản phẩm theo idProduct
-    const deleteDetailProduct = await detailProduct.findOneAndDelete({
-      idProduct: id,
-    }); //Xóa detail product theo id Product
+    const { id } = req.params; // Get the product ID from the params
+
+    // Delete the product by its _id
+    const deletedProduct = await Product.findByIdAndDelete(id);
 
     if (!deletedProduct) {
       return res.status(404).json({
@@ -90,54 +70,63 @@ export const deleteProductByID = async (req, res) => {
       });
     }
 
+    // Attempt to delete the associated product details
+    const deleteDetailProduct = await detailProduct.findOneAndDelete({ idProduct: id });
+
+    // If no associated detail found, don't throw an error but inform the client
     if (!deleteDetailProduct) {
-      return res.status(404).json({
-        success: false,
-        message: "Detail product of product not found.",
-      });
+      console.log(`No detail found for product with id ${id}`);
+      // You can either return success here or handle differently based on your requirements.
     }
 
     res.status(200).json({
       success: true,
       message: "Product deleted successfully.",
       dataProduct: deletedProduct,
-      dataDetail: deleteDetailProduct,
+      dataDetail: deleteDetailProduct || "No associated detail found.",
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
+
+
 export const getAllProducts = async (req, res) => {
-  const { nameOfProduct, typeProduct } = req.query;
-  let query = {};
-
-  if (nameOfProduct)
-    query.nameOfProduct = { $regex: nameOfProduct, $options: "i" };
-  if (typeProduct) query.typeProduct = { $regex: typeProduct, $options: "i" };
-
-  const page = parseInt(req.query.page);
-  const limit = parseInt(req.query.limit || 10);
   try {
-    const product = await Product.find(query)
-      .limit(limit)
-      .skip(page * limit);
-    if (!product) {
+    // Build query if filters are provided in the request
+    const { nameOfProduct, typeProduct } = req.query;
+    let query = {};
+    if (nameOfProduct) {
+      query.nameOfProduct = { $regex: nameOfProduct, $options: "i" };
+    }
+    if (typeProduct) {
+      query.typeProduct = { $regex: typeProduct, $options: "i" };
+    }
+
+    // Fetch all products based on query (no pagination applied)
+    const products = await Product.find(query);
+
+    // Check if no products are found
+    if (!products || products.length === 0) {
       return res
         .status(404)
-        .json({ success: false, message: "Products are empty." });
-    } else {
-      res.status(200).json({
-        success: true,
-        message: "Successfully get all products.",
-        total: product.length,
-        data: product,
-      });
+        .json({ success: false, message: "No products found." });
     }
+
+    // Respond with all matching products
+    res.status(200).json({
+      success: true,
+      message: "Successfully retrieved all products.",
+      total: products.length,
+      data: products,
+    });
   } catch (error) {
+    // Handle errors
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 export const getProduct = async (req, res) => {
   try {

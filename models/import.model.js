@@ -1,11 +1,6 @@
 import mongoose from "../config/mongoose.js";
 
 const importModel = new mongoose.Schema({
-  idImport: {
-    type: String,
-    required: true,
-    unique: true,
-  },
   idProduct: {
     type: String,
     required: true,
@@ -28,7 +23,7 @@ const importModel = new mongoose.Schema({
   dateImport: {
     type: Date,
     default: Date.now,
-},
+  },
   idProvider: {
     type: String,
     required: true,
