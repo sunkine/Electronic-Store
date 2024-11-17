@@ -282,9 +282,7 @@ export const forgotPasswordCtrl = asyncHandler(async (req, res) => {
 
   await account.save();
 
-  const resetURL = `${req.protocol}://${req.get(
-    "host"
-  )}/services/reset-password/${resetToken}`;
+  const resetURL = `http://localhost:3001/ResetPassword/${resetToken}`;
   const message = `Forgot your password? Click this link to reset it: ${resetURL}`;
 
   try {

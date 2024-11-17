@@ -26,12 +26,12 @@ router.post("/order-status", checkStatusOrder)
 //service of account
 router.put("/disable/:id", isLoggedin, isAdmin, disableAccount)
 router.post("/forgot-password", forgotPasswordCtrl);
-router.get("/reset-password/:token", resetPasswordCtrl);
+router.put("/reset-password/:token", resetPasswordCtrl);
 
 //clear cart of account
 router.post("/clear", isLoggedin, clearCart);
 
 //get detail of order
-router.get("/order/detail", getOrderDetails)
+router.get("/order/:id", getOrderDetails)
 
 export default router;
