@@ -129,7 +129,7 @@ catch (error) {
 
 export const getOrderDetails = async (req, res) => {
   try {
-    const { _id } = req.body;
+    const { _id } = req.params;
     
     // Tìm đơn hàng theo idOrder và lấy chi tiết sản phẩm
     const order = await Order.findById(_id).populate("products.idProduct");
