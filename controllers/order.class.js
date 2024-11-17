@@ -129,12 +129,12 @@ catch (error) {
 
 export const getOrderDetails = async (req, res) => {
   try {
-    const { _id } = req.params;
+    const { id } = req.params;
     
     // Tìm đơn hàng theo idOrder và lấy chi tiết sản phẩm
-    const order = await Order.findById(_id).populate("products.idProduct");
+    const order = await Order.findById(id);
     if (!order) {
-      return res.status(404).json({ success: false, message: "Order not found" });
+      return res.status(404).json({ success: false, message: "Order not found" }); //
     }
 
     res.status(200).json({
