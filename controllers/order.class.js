@@ -61,6 +61,11 @@ export const createOrder = async (req, res) => {
       await order.save();
     }
 
+    if (req.body.payment_method === "Cash") {
+      order.dateReceived = Date.now();
+      await order.save()
+    }
+
     // Xóa các sản phẩm đã mua khỏi giỏ hàng
     cart.products = cart.products.filter(
       (item) => !productIds.includes(item.idProduct._id.toString())
@@ -132,7 +137,8 @@ export const getOrderDetails = async (req, res) => {
     const { id } = req.params;
     
     // Tìm đơn hàng theo idOrder và lấy chi tiết sản phẩm
-    const order = await Order.findById(id);
+    const order = await Order.findById(id).populate("products.idProduct");
+
     if (!order) {
       return res.status(404).json({ success: false, message: "Order not found" }); //
     }

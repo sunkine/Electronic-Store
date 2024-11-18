@@ -9,7 +9,8 @@ import {
 import {
   forgotPasswordCtrl,
   resetPasswordCtrl,
-  disableAccount
+  disableAccount,
+  updatePassword
 } from "../controllers/account.class.js";
 
 import { clearCart } from "../controllers/cart.class.js";
@@ -26,6 +27,7 @@ router.post("/order-status", checkStatusOrder)
 //service of account
 router.put("/disable/:id", isLoggedin, isAdmin, disableAccount)
 router.post("/forgot-password", forgotPasswordCtrl);
+router.put("/change-password", isLoggedin, updatePassword)
 router.put("/reset-password/:token", resetPasswordCtrl);
 
 //clear cart of account
