@@ -3,7 +3,7 @@ import User from "../models/user.model.js";
 import Cart from "../models/cart.model.js";
 import asyncHandler from "express-async-handler";
 import { sendEmail, sendVerificationEmail } from "../utils/sendEmail.js";
-import {generateAccessToken} from "../utils/createToken.js";
+import { generateAccessToken } from "../utils/createToken.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import mongoose from "../config/mongoose.js";
@@ -45,28 +45,6 @@ export const getAllAccount = async (req, res) => {
   }
 };
 
-export const disableAccount = async (req, res) => {
-  try {
-    const id = req.params.id;
-    const account = await Account.findByIdAndUpdate(
-      { _id: id },
-      { isActive: false },
-      { new: true }
-    );
-    if (!account) {
-      res.status(404).json({ success: false, message: "Account not found." });
-    } else {
-      res.status(200).json({
-        success: true,
-        message: "Successfully disable account.",
-        data: account,
-      });
-    }
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
 export const deleteAccount = async (req, res) => {
   try {
     const id = req.params.id;
@@ -76,7 +54,11 @@ export const deleteAccount = async (req, res) => {
     const deleteUser = User.findOneAndDelete({ idAccount: id });
     const deleteCart = Cart.findOneAndDelete({ idAccount: id });
 
-    const [account, user, cart] = await Promise.all([deleteAccount, deleteUser, deleteCart]);
+    const [account, user, cart] = await Promise.all([
+      deleteAccount,
+      deleteUser,
+      deleteCart,
+    ]);
 
     // Check if any of the deletions failed and return a response accordingly
     if (!account || !user || !cart) {
@@ -144,15 +126,15 @@ export const updateAccount = async (req, res) => {
 };
 
 export const updatePassword = async (req, res) => {
-  const userId = req.userAuthId;
-  const {oldPassword, newPassword} = req.body;
+  const userId = req.userAuthId; // Lấy user ID từ token
+  const { oldPassword, newPassword } = req.body;
 
   try {
-    // 1. Tìm user theo token
+    // 1. Tìm user theo ID
     const account = await Account.findById(userId);
 
     if (!account) {
-      return res.status(200).json({
+      return res.status(404).json({
         success: false,
         message: "Account not found.",
       });
@@ -161,21 +143,38 @@ export const updatePassword = async (req, res) => {
     // 2. Kiểm tra mật khẩu cũ
     const isPasswordMatch = await bcrypt.compare(oldPassword, account.password);
     if (!isPasswordMatch) {
-      return res.status(400).json({ message: 'Mật khẩu cũ không đúng.' });
+      return res.status(400).json({ message: "Mật khẩu cũ không đúng." });
     }
 
-    // 3. Mã hóa mật khẩu mới
+    // 3. Kiểm tra mật khẩu mới không trùng mật khẩu cũ
+    const isSameAsOldPassword = await bcrypt.compare(newPassword, account.password);
+    if (isSameAsOldPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Mật khẩu mới không được trùng với mật khẩu cũ.",
+      });
+    }
+
+    // 4. Mã hóa mật khẩu mới
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // 4. Cập nhật mật khẩu trong cơ sở dữ liệu
+    // 5. Cập nhật mật khẩu trong cơ sở dữ liệu
     account.password = hashedPassword;
     await account.save();
 
-    res.status(200).json({success: "true",message: 'Đổi mật khẩu thành công.'});
+    res
+      .status(200)
+      .json({ success: true, message: "Đổi mật khẩu thành công." });
   } catch (error) {
-    res.status(500).json({success: "false", message: 'Đã xảy ra lỗi. Vui lòng thử lại sau.' });
+    console.error(error);
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "Đã xảy ra lỗi. Vui lòng thử lại sau.",
+      });
   }
-}
+};
 
 export const getAccount = async (req, res) => {
   try {
@@ -237,7 +236,7 @@ export const SignUp = asyncHandler(async (req, res) => {
     }
 
     const user = new User({
-      name:username,
+      name: username,
       email,
       idAccount: savedAccount._id,
     });
@@ -389,4 +388,42 @@ export const resetPasswordCtrl = asyncHandler(async (req, res) => {
     }
     res.status(500).json({ success: false, message: err.message });
   }
+});
+
+export const resendEmailVerification = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  // Kiểm tra xem email có tồn tại trong hệ thống không
+  const account = await Account.findOne({ email });
+  if (!account) {
+    return res
+      .status(404)
+      .json({ success: false, message: "Account not found" });
+  }
+
+  // Nếu tài khoản đã được kích hoạt
+  if (account.isActive) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Account is already verified" });
+  }
+
+  // Tạo token mới
+  const verificationToken = jwt.sign(
+    { userAuthId: account._id },
+    process.env.JWT_ACCESS_SECRET,
+    { expiresIn: "1h" }
+  );
+
+  // Generate the verification link
+  const verificationLink = `${req.protocol}://${req.get(
+    "host"
+  )}/auth/verify-email/${verificationToken}`;
+
+  // Send the verification email
+  await sendVerificationEmail(email, verificationLink);
+
+  res
+    .status(200)
+    .json({ success: true, message: "Verification email resent successfully" });
 });
