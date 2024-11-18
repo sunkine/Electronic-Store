@@ -143,6 +143,40 @@ export const updateAccount = async (req, res) => {
   }
 };
 
+export const updatePassword = async (req, res) => {
+  const userId = req.userAuthId;
+  const {oldPassword, newPassword} = req.body;
+
+  try {
+    // 1. Tìm user theo token
+    const account = await Account.findById(userId);
+
+    if (!account) {
+      return res.status(200).json({
+        success: false,
+        message: "Account not found.",
+      });
+    }
+
+    // 2. Kiểm tra mật khẩu cũ
+    const isPasswordMatch = await bcrypt.compare(oldPassword, account.password);
+    if (!isPasswordMatch) {
+      return res.status(400).json({ message: 'Mật khẩu cũ không đúng.' });
+    }
+
+    // 3. Mã hóa mật khẩu mới
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // 4. Cập nhật mật khẩu trong cơ sở dữ liệu
+    account.password = hashedPassword;
+    await account.save();
+
+    res.status(200).json({success: "true",message: 'Đổi mật khẩu thành công.'});
+  } catch (error) {
+    res.status(500).json({success: "false", message: 'Đã xảy ra lỗi. Vui lòng thử lại sau.' });
+  }
+}
+
 export const getAccount = async (req, res) => {
   try {
     const { id } = req.params;
