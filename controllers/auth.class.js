@@ -50,7 +50,7 @@ export const SignIn = async (req, res) => {
       });
     }
 
-    const { password: pwHash, ...userDetails } = account._doc;
+    const { password: pwHash, resetPasswordToken, resetPasswordExpires, ...userDetails } = account._doc;
 
     // Generate JWT tokens
     const accessToken = generateAccessToken(account._id);
@@ -107,14 +107,6 @@ export const verifyEmail = asyncHandler(async (req, res) => {
     account.isActive = true;
     await account.save();
     res.redirect(`http://localhost:3001/verification-success`);
-    // res.status(200).json({
-    //   success: true,
-    //   message: "Account successfully verified!",
-    //   data: {
-    //     id: account._id,
-    //     email: account.email,
-    //   },
-    // });
   } catch (err) {
     if (err.name === "TokenExpiredError") {
       return res

@@ -63,14 +63,13 @@ export const createOrder = async (req, res) => {
 
     if (req.body.payment_method === "Cash") {
       order.dateReceived = Date.now();
-      await order.save()
+      await order.save();
     }
 
     // Xóa các sản phẩm đã mua khỏi giỏ hàng
     cart.products = cart.products.filter(
       (item) => !productIds.includes(item.idProduct._id.toString())
     );
-    cart.products = []
     await cart.save();
 
     res.status(201).json({
