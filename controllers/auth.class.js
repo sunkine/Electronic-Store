@@ -185,12 +185,13 @@ export const verifyPayment = async (req, res) => {
     order.isPayment = true;
     order.linkPayment = null; // Xóa linkPayment sau khi thanh toán thành công
     await order.save();
+    res.redirect(`http://localhost:3001/order-pending`);
+    // res.status(200).json({
 
-    res.status(200).json({
-      success: true,
-      message: "Payment verified successfully",
-      data: order,
-    });
+    //   success: true,
+    //   message: "Payment verified successfully",
+    //   data: order,
+    // });
   } catch (error) {
     console.error(error);
     res.status(500).json({
