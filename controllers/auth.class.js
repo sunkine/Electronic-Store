@@ -4,6 +4,7 @@ import {
   generateAccessToken,
   generateRefreshToken,
 } from "../utils/createToken.js";
+import updateWarehouseAfterPayment from "./warehouse.class.js";
 import asyncHandler from "express-async-handler";
 import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
@@ -154,7 +155,6 @@ export const refreshAccessToken = (req, res) => {
   });
 };
 
-// Endpoint xác nhận thanh toán
 export const verifyPayment = async (req, res) => {
   try {
     // Lấy token từ query parameters
@@ -167,7 +167,7 @@ export const verifyPayment = async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_PAYMENT);
     const { idOrder } = decoded;
 
-    // Tìm đơn hàng với idOrder và userId
+    // Tìm đơn hàng với idOrder
     const order = await Order.findById(idOrder);
     if (!order) {
       return res.status(404).json({ success: false, message: "Order not found" });
@@ -177,13 +177,11 @@ export const verifyPayment = async (req, res) => {
     order.isPayment = true;
     order.linkPayment = null; // Xóa linkPayment sau khi thanh toán thành công
     await order.save();
-    res.redirect(`http://localhost:3001/order-pending`);
-    // res.status(200).json({
 
-    //   success: true,
-    //   message: "Payment verified successfully",
-    //   data: order,
-    // });
+    // Gọi hàm trừ kho
+    await updateWarehouseAfterPayment(order._id);
+
+    res.redirect("http://localhost:3001/order-pending");
   } catch (error) {
     console.error(error);
     res.status(500).json({
