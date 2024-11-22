@@ -5,20 +5,20 @@ export const addToCart = async (req, res) => {
   const { idProduct, quantity = 1 } = req.body;
   const _id = req.userAuthId;
   try {
-    const product = await Product.findById(idProduct);
+    const product = await Product.findOne({idProduct: idProduct});
     if (!product) {
       return res
         .status(404)
         .json({ success: false, message: "Product not found" });
     }
 
-    const { nameOfProduct, price } = product;
+    const { nameOfProduct, price, image } = product;
 
     let cart = await Cart.findOne({ idAccount: _id });
     if (!cart) {
       cart = new Cart({
         idAccount: _id,
-        products: [{ idProduct, quantity, nameOfProduct, price }],
+        products: [{ idProduct, quantity, nameOfProduct, price, image }],
       });
     } else {
       const itemIndex = cart.products.findIndex(
@@ -27,7 +27,7 @@ export const addToCart = async (req, res) => {
       if (itemIndex > -1) {
         cart.products[itemIndex].quantity += quantity;
       } else {
-        cart.products.push({ idProduct, quantity, nameOfProduct, price });
+        cart.products.push({ idProduct, quantity, nameOfProduct, price, image });
       }
     }
 

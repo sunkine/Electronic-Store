@@ -1,3 +1,4 @@
+import { type } from "os";
 import mongoose from "../config/mongoose.js";
 
 const orderModel = new mongoose.Schema({
@@ -39,8 +40,7 @@ const orderModel = new mongoose.Schema({
   products: [
     {
       idProduct: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Product",
+        type: String,
       },
       nameOfProduct: {
         type: String,
@@ -66,7 +66,7 @@ const orderModel = new mongoose.Schema({
     ],
     default: "Chờ xác nhận",
   },
-  linkPayment: {type: String}
+  linkPayment: { type: String },
 });
 
 const Order = mongoose.model("Order", orderModel);
