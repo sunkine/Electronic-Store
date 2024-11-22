@@ -4,7 +4,7 @@ import {
   generateAccessToken,
   generateRefreshToken,
 } from "../utils/createToken.js";
-import updateWarehouseAfterPayment from "./warehouse.class.js";
+import {updateWarehouseAfterPayment} from "./warehouse.class.js";
 import asyncHandler from "express-async-handler";
 import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";

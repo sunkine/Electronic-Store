@@ -161,8 +161,6 @@ export const updateWarehouseAfterPayment = async (orderId) => {
       warehouseProduct.quantity -= quantity;
       await warehouseProduct.save();
     }
-
-    console.log("Warehouse updated successfully!");
   } catch (error) {
     console.error("Error updating warehouse:", error.message);
     throw error;

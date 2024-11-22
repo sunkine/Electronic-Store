@@ -23,7 +23,7 @@ export const createOrder = async (req, res) => {
 
     // Tính tổng tiền đơn hàng
     const totalPrice = cart.products.reduce((sum, item) => {
-      if (productIds.includes(item.idProduct._id.toString())) {
+      if (productIds.includes(item.idProduct.toString())) {
         return sum + item.price * item.quantity;
       }
       return sum;
@@ -64,7 +64,7 @@ export const createOrder = async (req, res) => {
 
     // Xóa các sản phẩm đã mua khỏi giỏ hàng
     cart.products = cart.products.filter(
-      (item) => !productIds.includes(item.idProduct._id.toString())
+      (item) => !productIds.includes(item.idProduct.toString())
     );
     await cart.save();
 
