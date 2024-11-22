@@ -5,30 +5,30 @@ import CryptoJS from "crypto-js";
 import configPayment from "../config/configPayment.js";
 import moment from "moment";
 import qs from "qs";
-import jwt from "jsonwebtoken"
+import jwt from "jsonwebtoken";
 
 // Controller tạo đơn hàng
 export const createOrder = async (req, res) => {
   const _id = req.userAuthId;
-  let linkPayment = null;
   try {
     // Lấy thông tin giỏ hàng của người dùng
-    const cart = await Cart.findOne({ idAccount: _id }).populate("products.idProduct");
+    const cart = await Cart.findOne({ idAccount: _id }).populate(
+      "products.idProduct"
+    );
     if (!cart || cart.products.length === 0) {
       return res.status(404).json({ success: false, message: "Cart is empty" });
     }
+
     const productIds = req.body.products.map((item) => item.idProduct);
 
-    // // Tính tổng tiền đơn hàng
+    // Tính tổng tiền đơn hàng
     const totalPrice = cart.products.reduce((sum, item) => {
-      if (productIds.includes(item.idProduct._id.toString())) {
+      if (productIds.includes(item.idProduct.toString())) {
         return sum + item.price * item.quantity;
       }
       return sum;
     }, 0);
 
-    // Kiểm tra phương thức thanh toán và tạo link nếu cần
-    
     // Tạo đơn hàng mới
     const order = new Order({
       idCustomer: _id,
@@ -42,30 +42,30 @@ export const createOrder = async (req, res) => {
       isPayment: req.body.isPayment || false,
       products: req.body.products,
       status: req.body.status || "Chờ xác nhận",
-      linkPayment, // Lưu linkPayment vào đơn hàng
     });
-    
-    // Lưu đơn hàng vào cơ sở dữ liệu
-    await order.save();
-    
+
+    // Kiểm tra phương thức thanh toán
     if (req.body.payment_method === "Bank") {
       const paymentToken = jwt.sign(
         { _id, idOrder: order._id, totalPrice, products: req.body.products },
         process.env.JWT_PAYMENT,
-        { expiresIn: '1h' }
+        { expiresIn: "1h" }
       );
-      linkPayment = `${req.protocol}://${req.get("host")}/auth/verify-payment/${paymentToken}`;
-
-      // Cập nhật linkPayment vào đơn hàng
+      const linkPayment = `${req.protocol}://${req.get(
+        "host"
+      )}/auth/verify-payment/${paymentToken}`;
       order.linkPayment = linkPayment;
-      await order.save();
+    } else if (req.body.payment_method === "Cash") {
+      order.dateReceived = Date.now();
     }
+
+    // Lưu đơn hàng vào cơ sở dữ liệu
+    await order.save();
 
     // Xóa các sản phẩm đã mua khỏi giỏ hàng
     cart.products = cart.products.filter(
-      (item) => !productIds.includes(item.idProduct._id.toString())
+      (item) => !productIds.includes(item.idProduct.toString())
     );
-    cart.products = []
     await cart.save();
 
     res.status(201).json({
@@ -110,31 +110,36 @@ export const getOrderById = async (req, res) => {
   const { id } = req.params;
   try {
     // Tìm các đơn hàng theo _id
-      const page = parseInt(req.query.page) || 0; // Default to page 0 if not specified
-      const orders = await Order.find({ idCustomer: id })
-        .limit(page)
-        .skip(page * 10);
+    const page = parseInt(req.query.page) || 0; // Default to page 0 if not specified
+    const orders = await Order.find({ idCustomer: id })
+      .limit(page)
+      .skip(page * 10);
 
-      if (!orders || orders.length === 0) {
-        return res.status(404).json({ success: false, message: "No orders found" });
-      }
-
-      return res.status(200).json({ success: true, total: orders.length, data: orders });
+    if (!orders || orders.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "No orders found" });
     }
-catch (error) {
+
+    return res
+      .status(200)
+      .json({ success: true, total: orders.length, data: orders });
+  } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: "Server error" });
   }
-}
+};
 
 export const getOrderDetails = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     // Tìm đơn hàng theo idOrder và lấy chi tiết sản phẩm
-    const order = await Order.findById(id);
+    const order = await Order.findById(id).populate("products.idProduct");
     if (!order) {
-      return res.status(404).json({ success: false, message: "Order not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found" }); //
     }
 
     res.status(200).json({
@@ -191,7 +196,7 @@ export const updateOrder = async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
-}
+};
 
 export const payment = async (req, res) => {
   const orderInfo = req.body;
@@ -213,7 +218,8 @@ export const payment = async (req, res) => {
     amount: orderInfo.totalPrice,
     description: `Payment for the order #${transID}`,
     bank_code: "",
-    callback_url: "https://448a-2402-800-63a3-ff6a-d1e5-499b-9ba9-fbbc.ngrok-free.app/services/callback",
+    callback_url:
+      "https://448a-2402-800-63a3-ff6a-d1e5-499b-9ba9-fbbc.ngrok-free.app/services/callback",
   };
 
   // appid|app_trans_id|appuser|amount|apptime|embeddata|item

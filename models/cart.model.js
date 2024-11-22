@@ -9,8 +9,7 @@ const cartModel = new mongoose.Schema(
     products: [
       {
         idProduct: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Product",
+          type: String,
         },
         nameOfProduct: {
           type: String,
@@ -21,6 +20,9 @@ const cartModel = new mongoose.Schema(
         },
         price: {
           type: Number,
+        },
+        image: {
+          type: String,
         },
       },
     ],

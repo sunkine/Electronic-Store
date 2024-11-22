@@ -9,12 +9,12 @@ import {
 import {
   forgotPasswordCtrl,
   resetPasswordCtrl,
-  disableAccount
+  updatePassword,
+  resendEmailVerification
 } from "../controllers/account.class.js";
 
 import { clearCart } from "../controllers/cart.class.js";
 import { isLoggedin } from "../middlewares/checkLogin.js";
-import isAdmin from "../middlewares/checkAdmin.js";
 
 const router = express.Router();
 
@@ -24,9 +24,10 @@ router.post("/callback", callback)
 router.post("/order-status", checkStatusOrder)
 
 //service of account
-router.put("/disable/:id", isLoggedin, isAdmin, disableAccount)
+router.put("/change-password", isLoggedin, updatePassword)
 router.post("/forgot-password", forgotPasswordCtrl);
-router.get("/reset-password/:token", resetPasswordCtrl);
+router.put("/reset-password/:token", resetPasswordCtrl);
+router.post("/resend-email-vertification", resendEmailVerification)
 
 //clear cart of account
 router.post("/clear", isLoggedin, clearCart);
