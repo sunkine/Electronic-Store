@@ -27,7 +27,8 @@ export const updateWarehouseItemByID = async (req, res) => {
     const updatedData = { ...req.body };
 
     // Cập nhật Warehouse
-    const updatedWarehouseItem = await Warehouse.findOneAndUpdate(
+    const updatedWarehouseItem = 
+    await Warehouse.findOneAndUpdate(
       { idProduct },
       updatedData,
       { new: true }
