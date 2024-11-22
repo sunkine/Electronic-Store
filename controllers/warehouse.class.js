@@ -1,5 +1,6 @@
 import Warehouse from "../models/warehouse.model.js"
 import Order from "../models/order.model.js";
+import mongoose from "mongoose";
 // Tạo sản phẩm mới
 export const createWarehouseItem = async (req, res) => {
   try {
@@ -25,7 +26,9 @@ export const updateWarehouseItemByID = async (req, res) => {
     const idProduct = req.params.id;
     const updatedData = { ...req.body };
 
-    const updatedWarehouseItem = await Warehouse.findOneAndUpdate(
+    // Cập nhật Warehouse
+    const updatedWarehouseItem = 
+    await Warehouse.findOneAndUpdate(
       { idProduct },
       updatedData,
       { new: true }
@@ -38,15 +41,24 @@ export const updateWarehouseItemByID = async (req, res) => {
       });
     }
 
+    // Đồng bộ quantity của Product
+    const Product = mongoose.model("Product");
+    await Product.findOneAndUpdate(
+      { idProduct },
+      { quantity: updatedWarehouseItem.quantity }, // Cập nhật quantity
+      { new: true }
+    );
+
     res.status(200).json({
       success: true,
-      message: "Cập nhật sản phẩm thành công.",
+      message: "Cập nhật sản phẩm và đồng bộ hóa thành công.",
       data: updatedWarehouseItem,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 // Xóa sản phẩm theo ID
 export const deleteWarehouseItemByID = async (req, res) => {
