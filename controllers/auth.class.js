@@ -175,13 +175,14 @@ export const verifyPayment = async (req, res) => {
 
     // Cập nhật trạng thái isPayment thành true
     order.isPayment = true;
+    order.status = "Chờ giao hàng"
     order.linkPayment = null; // Xóa linkPayment sau khi thanh toán thành công
     await order.save();
 
     // Gọi hàm trừ kho
     await updateWarehouseAfterPayment(order._id);
 
-    res.redirect("http://localhost:3001/order-pending");
+    res.redirect(`http://localhost:3001/order-pending/${idOrder}`);
   } catch (error) {
     console.error(error);
     res.status(500).json({
