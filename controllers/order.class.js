@@ -136,7 +136,6 @@ export const getOrderDetails = async (req, res) => {
 
     // Tìm đơn hàng theo idOrder và lấy chi tiết sản phẩm
     const order = await Order.findById(id).populate("products.idProduct");
-
     if (!order) {
       return res
         .status(404)

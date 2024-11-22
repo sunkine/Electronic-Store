@@ -13,6 +13,7 @@ import WarehouseRouter from "./warehouse.route.js"
 import ImportRoute from "./import.route.js"
 import UserRoute from "./user.route.js"
 import AccountRoute from "./account.route.js"
+import StatisticsRoute from "./statistics.route.js"
 
 const app = express();
 
@@ -30,5 +31,6 @@ app.use("/detail", DetailProduct)
 app.use("/import", ImportRoute)
 app.use("/user", UserRoute)
 app.use("/account", AccountRoute)
+app.use("/statistics", StatisticsRoute)
 
 export default app;
