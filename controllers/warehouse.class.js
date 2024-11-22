@@ -1,5 +1,5 @@
-import Warehouse from "../models/warehouse.model.js";
-
+import Warehouse from "../models/warehouse.model.js"
+import Order from "../models/order.model.js";
 // Tạo sản phẩm mới
 export const createWarehouseItem = async (req, res) => {
   try {
@@ -131,3 +131,38 @@ export const listWarehouseItemSearch = async (req, res) => {
   }
 };
 
+export const updateWarehouseAfterPayment = async (orderId) => {
+  try {
+    // Lấy thông tin đơn hàng
+    const order = await Order.findById(orderId);
+    if (!order) {
+      throw new Error("Order not found");
+    }
+
+    // Lặp qua danh sách sản phẩm trong đơn hàng
+    for (const product of order.products) {
+      const { idProduct, quantity } = product;
+
+      // Tìm sản phẩm trong kho
+      const warehouseProduct = await Warehouse.findOne({ idProduct });
+
+      if (!warehouseProduct) {
+        throw new Error(`Product with ID ${idProduct} not found in warehouse`);
+      }
+
+      // Kiểm tra số lượng sản phẩm trong kho
+      if (warehouseProduct.quantity < quantity) {
+        throw new Error(
+          `Insufficient quantity for product ${warehouseProduct.nameOfProduct}`
+        );
+      }
+
+      // Trừ số lượng sản phẩm trong kho
+      warehouseProduct.quantity -= quantity;
+      await warehouseProduct.save();
+    }
+  } catch (error) {
+    console.error("Error updating warehouse:", error.message);
+    throw error;
+  }
+};

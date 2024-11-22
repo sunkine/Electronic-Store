@@ -5,7 +5,7 @@ export const addToCart = async (req, res) => {
   const { idProduct, quantity = 1 } = req.body;
   const _id = req.userAuthId;
   try {
-    const product = await Product.findById(idProduct);
+    const product = await Product.findOne({idProduct: idProduct});
     if (!product) {
       return res
         .status(404)
