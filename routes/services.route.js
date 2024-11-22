@@ -32,6 +32,6 @@ router.get("/reset-password/:token", resetPasswordCtrl);
 router.post("/clear", isLoggedin, clearCart);
 
 //get detail of order
-router.get("/order/detail", getOrderDetails)
+router.get("/order/:id", getOrderDetails)
 
 export default router;

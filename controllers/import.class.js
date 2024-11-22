@@ -3,53 +3,45 @@ import Warehouse from "../models/warehouse.model.js";
 import mongoose from 'mongoose';
 
 // Create a new import item and update warehouse stock
+// Create a new import item and update warehouse stock
 export const createImportItem = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
-  
+
   try {
     const { idProduct, nameOfProduct, quantity, priceImport, idProvider, nameOfProvider } = req.body;
 
-    // Kiểm tra nếu sản phẩm đã tồn tại trong kho
-    const existingProduct = await Warehouse.findOne({ idProduct }).session(session);
-    
-    // Nếu sản phẩm chưa có trong kho, tạo mới item trong kho
-    if (!existingProduct) {
-      const newWarehouseItem = new Warehouse({
+    // Kiểm tra nếu sản phẩm đã tồn tại trong bảng Import
+    let existingImportItem = await Import.findOne({ idProduct }).session(session);
+
+    if (existingImportItem) {
+      // Nếu tồn tại, cập nhật số lượng thay vì tạo mới
+      existingImportItem.quantity += Number(quantity);
+      await existingImportItem.save({ session });
+    } else {
+      // Nếu chưa tồn tại, tạo mới
+      const newImportItem = new Import({
         idProduct,
         nameOfProduct,
         quantity,
+        priceImport,
         idProvider,
         nameOfProvider,
+        dateImport: new Date(),
       });
-      await newWarehouseItem.save({ session });
-    } else {
-      // Nếu sản phẩm đã có trong kho, cập nhật số lượng
-      await Warehouse.findOneAndUpdate(
-        { idProduct },
-        { $inc: { quantity } },  // Tăng số lượng sản phẩm trong kho
-        { new: true, session }
-      );
+
+      await newImportItem.save({ session });
     }
 
-    // Tạo mới mục nhập import
-    const newImportItem = new Import({
-      idProduct,
-      nameOfProduct,
-      quantity,
-      priceImport,
-      idProvider,
-      nameOfProvider,
-      dateImport: new Date(),
-    });
-    
-    // Lưu mục nhập import
-    await newImportItem.save({ session });
+    // Cập nhật kho hàng
+    let warehouseItem = await Warehouse.findOne({ idProduct }).session(session);
 
-    // Kiểm tra và cập nhật kho (nếu cần)
-    const existingProductInWarehouse = await Warehouse.findOne({ idProduct }).session(session);
-    if (!existingProductInWarehouse) {
-      // Thêm sản phẩm vào kho nếu không tồn tại
+    if (warehouseItem) {
+      // Nếu sản phẩm tồn tại trong kho, cộng dồn số lượng
+      warehouseItem.quantity += Number(quantity);
+      await warehouseItem.save({ session });
+    } else {
+      // Nếu sản phẩm chưa tồn tại, thêm mới vào kho
       const newWarehouseItem = new Warehouse({
         idProduct,
         nameOfProduct,
@@ -58,13 +50,6 @@ export const createImportItem = async (req, res) => {
         nameOfProvider,
       });
       await newWarehouseItem.save({ session });
-    } else {
-      // Cập nhật số lượng sản phẩm trong kho nếu sản phẩm đã tồn tại
-      await Warehouse.findOneAndUpdate(
-        { idProduct },
-        { $inc: { quantity } }, // Tăng số lượng
-        { new: true, session }
-      );
     }
 
     // Cam kết giao dịch
@@ -73,8 +58,7 @@ export const createImportItem = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: "Tạo sản phẩm nhập khẩu thành công và cập nhật kho.",
-      data: newImportItem,
+      message: "Cập nhật kho và sản phẩm nhập khẩu thành công.",
     });
   } catch (error) {
     // Rollback giao dịch nếu có lỗi
@@ -82,7 +66,10 @@ export const createImportItem = async (req, res) => {
     session.endSession();
 
     console.error("Error creating import:", error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
