@@ -7,14 +7,27 @@ import { generateAccessToken } from "../utils/createToken.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import mongoose from "../config/mongoose.js";
+import Staff from "../models/staff.model.js";
 
 export const createStaffAccount = async (req, res) => {
     const newAccount = new Account(req.body);
     try {
       const saved = await newAccount.save();
+
+      if (!saved) {
+        return res.status(401).json({success: false, message: "Fail to created staff account"})
+      }
+
+      const staff = new Staff({
+        idAccount: saved._id,
+        idCompany: req.body.idCompany || "",
+      })
+      if (!staff) {
+        return res.status(401).json({success: false, message: "Fail to created staff info"})
+      }
       res
         .status(200)
-        .json({ success: true, messgae: "Successfully created.", data: saved });
+        .json({ success: true, message: "Successfully created.", data: saved });
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });
     }

@@ -13,18 +13,21 @@ export const createUser = async (req, res) => {
 };
 
 export const updateUser = async (req, res) => {
-  const {id} = req.params;
+  const { id } = req.params;
   try {
-    const user = await User.findById(id)
+    const user = await User.findById(id);
     if (!user) {
       return res.status(404).json({
         success: false,
         message: "User not found.",
       });
     }
-    
+
     if (req.body.phone) {
-      const existingUserWithPhone = await User.findOne({ phone: req.body.phone, _id: { $ne: user._id } });
+      const existingUserWithPhone = await User.findOne({
+        phone: req.body.phone,
+        _id: { $ne: user._id },
+      });
       if (existingUserWithPhone) {
         return res.status(400).json({
           success: false,
@@ -79,7 +82,7 @@ export const getAllUser = async (req, res) => {
   try {
     const page = parseInt(req.query.page);
     const limit = parseInt(req.query.limit || 10);
-    let filters = {}
+    let filters = {};
 
     const user = await User.find(filters)
       .limit(limit)
@@ -102,7 +105,7 @@ export const getAllUser = async (req, res) => {
 };
 
 export const getOneUser = async (req, res) => {
-  const {id} = req.params;
+  const { id } = req.params;
   try {
     const user = await User.findById(id);
 

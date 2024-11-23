@@ -23,7 +23,7 @@ export const sendEmail = async (options) => {
 
 export const sendVerificationEmail = async (email, verificationLink) => {
   const transporter = nodemailer.createTransport({
-    service: 'Gmail', // or any other email provider
+    service: "Gmail", // or any other email provider
     auth: {
       user: process.env.GMAIL_USER, // your email user
       pass: process.env.GMAIL_PASS, // your email password
@@ -33,7 +33,7 @@ export const sendVerificationEmail = async (email, verificationLink) => {
   const mailOptions = {
     from: process.env.EMAIL_USER,
     to: email,
-    subject: 'Account Activation',
+    subject: "Account Activation",
     html: `
       <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #333;">
         <h2 style="color: #555;">Welcome to Our Service!</h2>
@@ -52,5 +52,4 @@ export const sendVerificationEmail = async (email, verificationLink) => {
   await transporter.sendMail(mailOptions);
 };
 
-
-export default { sendEmail, sendVerificationEmail};
+export default { sendEmail, sendVerificationEmail };

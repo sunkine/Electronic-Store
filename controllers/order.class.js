@@ -310,8 +310,9 @@ export const payment = async (req, res) => {
   vnp_Params["vnp_SecureHash"] = signed;
   vnpUrl += "?" + querystring.stringify(vnp_Params, { encode: false });
 
-  res.json({vnpUrl})
+  res.json({ vnpUrl });
 };
+
 export const callback = async (req, res) => {
   let result = {};
 

@@ -4,7 +4,7 @@ export const createStaffInfo = async (req, res) => {
     const userId = req.userAuthId;
     try {
     const newStaffInfo = new Staff({
-        idAccount:userId._id,  
+        idAccount: userId._id,  
         name: req.body.name,
         gender: req.body.gender,
         phone: req.body.phone,

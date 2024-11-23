@@ -1,11 +1,10 @@
 import Product from "../models/product.model.js";
 import detailProduct from "../models/detailProduct.model.js";
 
-
 export const createProduct = async (req, res) => {
   try {
     const productData = req.body;
-    const imageUrl = productData.image || ''; // Get image URL from body if it's sent from frontend
+    const imageUrl = productData.image || ""; // Get image URL from body if it's sent from frontend
 
     // If no image URL is sent, fallback to using local upload (if file upload exists)
     const imagePath = req.file ? req.file.path.replace(/\\/g, "/") : imageUrl;
@@ -31,7 +30,7 @@ export const createProduct = async (req, res) => {
 export const updateProductByID = async (req, res) => {
   try {
     const idProduct = req.params.id;
-    const updatedData = req.body; 
+    const updatedData = req.body;
 
     const updatedProduct = await Product.findOneAndUpdate(
       { idProduct },
@@ -71,7 +70,9 @@ export const deleteProductByID = async (req, res) => {
     }
 
     // Attempt to delete the associated product details
-    const deleteDetailProduct = await detailProduct.findOneAndDelete({ idProduct: id });
+    const deleteDetailProduct = await detailProduct.findOneAndDelete({
+      idProduct: id,
+    });
 
     // If no associated detail found, don't throw an error but inform the client
     if (!deleteDetailProduct) {
@@ -89,8 +90,6 @@ export const deleteProductByID = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-
-
 
 export const getAllProducts = async (req, res) => {
   try {
@@ -126,7 +125,6 @@ export const getAllProducts = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-
 
 export const getProduct = async (req, res) => {
   try {

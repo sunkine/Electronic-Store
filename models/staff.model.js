@@ -39,8 +39,8 @@ const staffSchema = new mongoose.Schema(
       default: "",
     },
     idCompany: {
-        type: String,
-    }
+      type: String,
+    },
   },
   { timestamps: true }
 );

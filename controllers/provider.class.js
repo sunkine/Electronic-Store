@@ -76,8 +76,7 @@ export const deleteProviderByID = async (req, res) => {
 export const getAllProviders = async (req, res) => {
   const page = parseInt(req.query.page) || 0; // Mặc định trang 0 nếu không có tham số
   try {
-    const providers = await Provider
-      .find({})
+    const providers = await Provider.find({})
       .limit(10) // Giới hạn số lượng nhà cung cấp trả về
       .skip(page * 10); // Bỏ qua số lượng nhà cung cấp tương ứng với trang
 
@@ -93,7 +92,6 @@ export const getAllProviders = async (req, res) => {
   }
 };
 
-
 // Lấy thông tin một nhà cung cấp theo ID
 export const getProvider = async (req, res) => {
   try {
@@ -101,7 +99,9 @@ export const getProvider = async (req, res) => {
     const provider = await Provider.findOne({ idProvider: id }); // Tìm nhà cung cấp theo idProvider
 
     if (!provider) {
-      return res.status(404).json({ success: false, message: "Nhà cung cấp không tìm thấy." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Nhà cung cấp không tìm thấy." });
     }
 
     res.status(200).json({

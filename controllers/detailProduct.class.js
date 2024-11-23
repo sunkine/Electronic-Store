@@ -1,10 +1,10 @@
 import detailProduct from "../models/detailProduct.model.js";
-import Product from "../models/product.model.js"
+import Product from "../models/product.model.js";
 
 export const getDetailProduct = async (req, res) => {
   try {
     const id = req.params.id;
-    const product = await detailProduct.findOne({idProduct: id});
+    const product = await detailProduct.findOne({ idProduct: id });
     if (!product) {
       res.status(404).json({
         success: false,
@@ -41,7 +41,7 @@ export const deleteDetailProductByID = async (req, res) => {
       { detail: id }, // Tìm sản phẩm có chi tiết này
       { detail: null }, // Đặt trường detail thành null
       { new: true } // Trả về sản phẩm đã cập nhật
-    ); 
+    );
 
     if (!updatedProduct) {
       return res.status(404).json({
@@ -60,17 +60,16 @@ export const deleteDetailProductByID = async (req, res) => {
   }
 };
 
-
 export const createDetailProduct = async (req, res) => {
   try {
-    const { idProduct, detailDescription } = req.body; 
+    const { idProduct, detailDescription } = req.body;
 
-    const isExistProduct = await Product.findById(idProduct)
+    const isExistProduct = await Product.findById(idProduct);
 
     if (!isExistProduct) {
       return res
-      .status(404)
-      .json({ success: false, message: "Product are not found." });
+        .status(404)
+        .json({ success: false, message: "Product are not found." });
     }
 
     // Tạo một chi tiết sản phẩm mới
@@ -83,10 +82,9 @@ export const createDetailProduct = async (req, res) => {
     await newDetailProduct.save();
 
     isExistProduct.detail = newDetailProduct._id;
-    await isExistProduct.save()
+    await isExistProduct.save();
 
-    await 
-    res.status(201).json({
+    await res.status(201).json({
       success: true,
       message: "Detail product created successfully.",
       data: newDetailProduct,
@@ -95,7 +93,6 @@ export const createDetailProduct = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-
 
 export const getAllDetailProducts = async (req, res) => {
   const page = parseInt(req.query.page);
@@ -124,17 +121,18 @@ export const getAllDetailProducts = async (req, res) => {
 export const updateDetailProduct = async (req, res) => {
   try {
     const idProduct = req.params.id;
-    const detailDescription = req.body; 
+    const detailDescription = req.body;
 
-    const isExistProduct = await detailProduct.findOneAndUpdate({idProduct},
+    const isExistProduct = await detailProduct.findOneAndUpdate(
+      { idProduct },
       detailDescription,
       { new: true }
     );
 
     if (!isExistProduct) {
       return res
-      .status(404)
-      .json({ success: false, message: "Product are not found." });
+        .status(404)
+        .json({ success: false, message: "Product are not found." });
     }
 
     res.status(201).json({

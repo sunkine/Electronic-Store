@@ -5,7 +5,7 @@ export const addToCart = async (req, res) => {
   const { idProduct, quantity = 1 } = req.body;
   const _id = req.userAuthId;
   try {
-    const product = await Product.findOne({idProduct: idProduct});
+    const product = await Product.findOne({ idProduct: idProduct });
     if (!product) {
       return res
         .status(404)
@@ -27,7 +27,13 @@ export const addToCart = async (req, res) => {
       if (itemIndex > -1) {
         cart.products[itemIndex].quantity += quantity;
       } else {
-        cart.products.push({ idProduct, quantity, nameOfProduct, price, image });
+        cart.products.push({
+          idProduct,
+          quantity,
+          nameOfProduct,
+          price,
+          image,
+        });
       }
     }
 
@@ -55,45 +61,55 @@ export const deleteCart = async (req, res) => {
 };
 
 export const deleteFromCart = async (req, res) => {
-  const { id } = req.params;  // Get the combined id (idCart-idProduct)
+  const { id } = req.params; // Get the combined id (idCart-idProduct)
 
   if (!id) {
-      return res.status(400).json({ success: false, message: "Missing id in request" });
+    return res
+      .status(400)
+      .json({ success: false, message: "Missing id in request" });
   }
 
   // Split the id into idCart and idProduct
-  const [idCart, idProduct] = id.split('-');
+  const [idCart, idProduct] = id.split("-");
 
   if (!idCart || !idProduct) {
-      return res.status(400).json({ success: false, message: "Invalid id format" });
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid id format" });
   }
 
   try {
-      // Find the cart by idCart
-      const cart = await Cart.findById(idCart);
-      if (!cart) {
-          return res.status(404).json({ success: false, message: "Cart not found" });
-      }
+    // Find the cart by idCart
+    const cart = await Cart.findById(idCart);
+    if (!cart) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Cart not found" });
+    }
 
-      // Find the index of the product in the cart
-      const productIndex = cart.products.findIndex((item) => item.idProduct.toString() === idProduct);
+    // Find the index of the product in the cart
+    const productIndex = cart.products.findIndex(
+      (item) => item.idProduct.toString() === idProduct
+    );
 
-      // Check if product exists and remove it
-      if (productIndex > -1) {
-          cart.products.splice(productIndex, 1);
-          await cart.save();
+    // Check if product exists and remove it
+    if (productIndex > -1) {
+      cart.products.splice(productIndex, 1);
+      await cart.save();
 
-          return res.status(200).json({
-              success: true,
-              message: "Product removed from cart",
-              data: cart,
-          });
-      } else {
-          return res.status(404).json({ success: false, message: "Product not found in cart" });
-      }
+      return res.status(200).json({
+        success: true,
+        message: "Product removed from cart",
+        data: cart,
+      });
+    } else {
+      return res
+        .status(404)
+        .json({ success: false, message: "Product not found in cart" });
+    }
   } catch (error) {
-      console.error("Error deleting product from cart:", error);
-      return res.status(500).json({ success: false, message: "Server error" });
+    console.error("Error deleting product from cart:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
@@ -184,7 +200,9 @@ export const updateCart = async (req, res) => {
     // Tìm giỏ hàng theo id
     const cart = await Cart.findById(id);
     if (!cart) {
-        return res.status(404).json({ success: false, message: "Cart not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Cart not found" });
     }
 
     // Tìm sản phẩm trong giỏ hàng dựa trên productId
@@ -193,7 +211,9 @@ export const updateCart = async (req, res) => {
     );
 
     if (productIndex === -1) {
-      return res.status(404).json({ success: false, message: "Product not found in cart" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Product not found in cart" });
     }
 
     // Cập nhật số lượng sản phẩm, đảm bảo số lượng tối thiểu là 1
