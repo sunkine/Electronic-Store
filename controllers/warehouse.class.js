@@ -1,4 +1,4 @@
-import Warehouse from "../models/warehouse.model.js"
+import Warehouse from "../models/warehouse.model.js";
 import Order from "../models/order.model.js";
 import mongoose from "mongoose";
 // Tạo sản phẩm mới
@@ -27,8 +27,7 @@ export const updateWarehouseItemByID = async (req, res) => {
     const updatedData = { ...req.body };
 
     // Cập nhật Warehouse
-    const updatedWarehouseItem = 
-    await Warehouse.findOneAndUpdate(
+    const updatedWarehouseItem = await Warehouse.findOneAndUpdate(
       { idProduct },
       updatedData,
       { new: true }
@@ -59,12 +58,13 @@ export const updateWarehouseItemByID = async (req, res) => {
   }
 };
 
-
 // Xóa sản phẩm theo ID
 export const deleteWarehouseItemByID = async (req, res) => {
   try {
     const { id } = req.params;
-    const deletedWarehouseItem = await Warehouse.findOneAndDelete({ idProduct: id });
+    const deletedWarehouseItem = await Warehouse.findOneAndDelete({
+      idProduct: id,
+    });
 
     if (!deletedWarehouseItem) {
       return res.status(404).json({
@@ -100,7 +100,6 @@ export const getAllWarehouseItems = async (req, res) => {
   }
 };
 
-
 // Lấy thông tin một sản phẩm theo ID
 export const getWarehouseItem = async (req, res) => {
   try {
@@ -108,7 +107,9 @@ export const getWarehouseItem = async (req, res) => {
     const warehouseItem = await Warehouse.findOne({ idProduct: id });
 
     if (!warehouseItem) {
-      return res.status(404).json({ success: false, message: "Sản phẩm không tìm thấy." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Sản phẩm không tìm thấy." });
     }
 
     res.status(200).json({

@@ -1,6 +1,6 @@
-import Import from "../models/import.model.js"; 
-import Warehouse from "../models/warehouse.model.js"; 
-import mongoose from 'mongoose';
+import Import from "../models/import.model.js";
+import Warehouse from "../models/warehouse.model.js";
+import mongoose from "mongoose";
 
 // Create a new import item and update warehouse stock
 // Create a new import item and update warehouse stock
@@ -9,10 +9,19 @@ export const createImportItem = async (req, res) => {
   session.startTransaction();
 
   try {
-    const { idProduct, nameOfProduct, quantity, priceImport, idProvider, nameOfProvider } = req.body;
+    const {
+      idProduct,
+      nameOfProduct,
+      quantity,
+      priceImport,
+      idProvider,
+      nameOfProvider,
+    } = req.body;
 
     // Kiểm tra nếu sản phẩm đã tồn tại trong bảng Import
-    let existingImportItem = await Import.findOne({ idProduct }).session(session);
+    let existingImportItem = await Import.findOne({ idProduct }).session(
+      session
+    );
 
     if (existingImportItem) {
       // Nếu tồn tại, cập nhật số lượng thay vì tạo mới
@@ -79,7 +88,9 @@ export const updateImportItemByID = async (req, res) => {
     const { id } = req.params;
     const updatedData = { ...req.body };
 
-    const updatedImportItem = await Import.findByIdAndUpdate(id, updatedData, { new: true });
+    const updatedImportItem = await Import.findByIdAndUpdate(id, updatedData, {
+      new: true,
+    });
 
     if (!updatedImportItem) {
       return res.status(404).json({
@@ -138,7 +149,6 @@ export const getAllImportItems = async (req, res) => {
   }
 };
 
-
 // Lấy chi tiết sản phẩm nhập khẩu theo _id
 export const getImportItem = async (req, res) => {
   try {
@@ -146,7 +156,10 @@ export const getImportItem = async (req, res) => {
     const importItem = await Import.findById(id);
 
     if (!importItem) {
-      return res.status(404).json({ success: false, message: "Sản phẩm nhập khẩu không tìm thấy." });
+      return res.status(404).json({
+        success: false,
+        message: "Sản phẩm nhập khẩu không tìm thấy.",
+      });
     }
 
     res.status(200).json({

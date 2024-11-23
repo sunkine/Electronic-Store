@@ -1,9 +1,19 @@
-import User from "../models/user.model.js";
+import Staff from "../models/staff.model.js";
 
-export const createUser = async (req, res) => {
-  const newUser = new User(req.body);
-  try {
-    const saved = await newUser.save();
+export const createStaffInfo = async (req, res) => {
+    const userId = req.userAuthId;
+    try {
+    const newStaffInfo = new Staff({
+        idAccount: userId._id,  
+        name: req.body.name,
+        gender: req.body.gender,
+        phone: req.body.phone,
+        email: req.body.email,
+        address: req.body.address,
+        photo: req.body.photo || "",
+        idCompany: req.body.idCompany,
+    });
+    const saved = await newStaffInfo.save();
     res
       .status(200)
       .json({ success: true, messgae: "Successfully created.", data: saved });
@@ -13,21 +23,18 @@ export const createUser = async (req, res) => {
 };
 
 export const updateUser = async (req, res) => {
-  const { id } = req.params;
+  const {id} = req.params;
   try {
-    const user = await User.findById(id);
+    const user = await User.findById(id)
     if (!user) {
       return res.status(404).json({
         success: false,
         message: "User not found.",
       });
     }
-
+    
     if (req.body.phone) {
-      const existingUserWithPhone = await User.findOne({
-        phone: req.body.phone,
-        _id: { $ne: user._id },
-      });
+      const existingUserWithPhone = await User.findOne({ phone: req.body.phone, _id: { $ne: user._id } });
       if (existingUserWithPhone) {
         return res.status(400).json({
           success: false,
@@ -82,7 +89,7 @@ export const getAllUser = async (req, res) => {
   try {
     const page = parseInt(req.query.page);
     const limit = parseInt(req.query.limit || 10);
-    let filters = {};
+    let filters = {}
 
     const user = await User.find(filters)
       .limit(limit)
@@ -105,7 +112,7 @@ export const getAllUser = async (req, res) => {
 };
 
 export const getOneUser = async (req, res) => {
-  const { id } = req.params;
+  const {id} = req.params;
   try {
     const user = await User.findById(id);
 
