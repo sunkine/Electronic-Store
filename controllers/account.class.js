@@ -9,28 +9,53 @@ import jwt from "jsonwebtoken";
 import mongoose from "../config/mongoose.js";
 import Staff from "../models/staff.model.js";
 
-export const createStaffAccount = async (req, res) => {
+export const createAccount = async (req, res) => {
+  const { email, role, idCompany, ...userData } = req.body;
+
+  try {
+    // Tạo tài khoản mới
     const newAccount = new Account(req.body);
-    try {
-      const saved = await newAccount.save();
+    const savedAccount = await newAccount.save();
 
-      if (!saved) {
-        return res.status(401).json({success: false, message: "Fail to created staff account"})
-      }
-
-      const staff = new Staff({
-        idAccount: saved._id,
-        idCompany: req.body.idCompany || "",
-      })
-      if (!staff) {
-        return res.status(401).json({success: false, message: "Fail to created staff info"})
-      }
-      res
-        .status(200)
-        .json({ success: true, message: "Successfully created.", data: saved });
-    } catch (error) {
-      res.status(500).json({ success: false, message: error.message });
+    if (!savedAccount) {
+      return res.status(401).json({
+        success: false,
+        message: "Failed to create account",
+      });
     }
+
+    if (role === "staff") {
+      // Tạo staff
+      const staff = new Staff({
+        idAccount: savedAccount._id,
+        email: email,
+        idCompany: idCompany || "",
+      });
+      await staff.save();
+    } else if (role === "user") {
+      // Tạo user
+      const user = new User({
+        idAccount: savedAccount._id,
+        email: email,
+        ...userData,
+      });
+      await user.save();
+
+      const cart = new Cart({
+        idAccount: savedAccount._id,
+        products: [],
+      });
+      await cart.save();
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Successfully created account.",
+      data: savedAccount,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 };
 
 export const getAllAccount = async (req, res) => {
@@ -172,7 +197,10 @@ export const updatePassword = async (req, res) => {
     }
 
     // 3. Kiểm tra mật khẩu mới không trùng mật khẩu cũ
-    const isSameAsOldPassword = await bcrypt.compare(newPassword, account.password);
+    const isSameAsOldPassword = await bcrypt.compare(
+      newPassword,
+      account.password
+    );
     if (isSameAsOldPassword) {
       return res.status(400).json({
         success: false,
@@ -192,12 +220,10 @@ export const updatePassword = async (req, res) => {
       .json({ success: true, message: "Đổi mật khẩu thành công." });
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Đã xảy ra lỗi. Vui lòng thử lại sau.",
-      });
+    res.status(500).json({
+      success: false,
+      message: "Đã xảy ra lỗi. Vui lòng thử lại sau.",
+    });
   }
 };
 
