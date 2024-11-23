@@ -13,18 +13,18 @@ export const createExpressCompany = async (req, res) => {
 };
 
 export const updateExpressCompany = async (req, res) => {
-  const {id} = req.params;
+  const { id } = req.params;
   try {
-    const company = await expressCompany.findById(id)
-    if (!company) {
+    const eCompany = await expressCompany.findById(id);
+    if (!eCompany) {
       return res.status(404).json({
         success: false,
-        message: "User not found.",
+        message: "Express company not found.",
       });
     }
 
     const idCompanyUpdated = await expressCompany.findByIdAndUpdate(
-      company._id,
+      eCompany._id,
       {
         $set: req.body,
       },
@@ -34,7 +34,7 @@ export const updateExpressCompany = async (req, res) => {
     if (!idCompanyUpdated) {
       return res
         .status(404)
-        .json({ success: false, message: "User not found." });
+        .json({ success: false, message: "Express company not found." });
     } else {
       res.status(200).json({
         success: true,
@@ -52,11 +52,13 @@ export const deleteExpressCompany = async (req, res) => {
     const id = req.params.id;
     const eCompany = await expressCompany.findByIdAndDelete(id);
     if (!eCompany) {
-      res.status(404).json({ success: false, message: "User not found." });
+      res
+        .status(404)
+        .json({ success: false, message: "Express company not found." });
     } else {
       res.status(200).json({
         success: true,
-        messgae: "Successfully delete user.",
+        messgae: "Successfully delete express company.",
         data: eCompany,
       });
     }
@@ -65,25 +67,26 @@ export const deleteExpressCompany = async (req, res) => {
   }
 };
 
-export const getAllUser = async (req, res) => {
+export const getAllexpressCompany = async (req, res) => {
   try {
     const page = parseInt(req.query.page);
     const limit = parseInt(req.query.limit || 10);
-    let filters = {}
+    let filters = {};
 
-    const user = await User.find(filters)
+    const eCompany = await expressCompany
+      .find(filters)
       .limit(limit)
       .skip(page * limit);
-    if (!user) {
+    if (!eCompany) {
       return res
         .status(404)
-        .json({ success: false, message: "User not found." });
+        .json({ success: false, message: "Express company not found." });
     } else {
       res.status(200).json({
         success: true,
-        messgae: "Successfully get all users.",
-        total: user.length,
-        data: user,
+        messgae: "Successfully get all express company.",
+        total: eCompany.length,
+        data: eCompany,
       });
     }
   } catch (error) {
@@ -91,21 +94,21 @@ export const getAllUser = async (req, res) => {
   }
 };
 
-export const getOneUser = async (req, res) => {
-  const {id} = req.params;
+export const getOneExpressCompany = async (req, res) => {
+  const { id } = req.params;
   try {
-    const user = await User.findById(id);
+    const eCompany = await expressCompany.findById(id);
 
-    if (!user) {
+    if (!eCompany) {
       return res
         .status(404)
-        .json({ success: false, message: "User not found." });
+        .json({ success: false, message: "Express company not found." });
     }
     // Trả về thông tin người dùng
     res.status(200).json({
       success: true,
-      message: "Successfully get user information.",
-      data: user,
+      message: "Successfully get express company information.",
+      data: eCompany,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
