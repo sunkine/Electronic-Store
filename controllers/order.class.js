@@ -33,7 +33,7 @@ export const createOrder = async (req, res) => {
     // Tạo đơn hàng mới
     const order = new Order({
       idCustomer: _id,
-      //idStaff: "",
+      idStaff: null,
       nameOfCustomer: req.body.nameOfCustomer,
       phone: req.body.phone,
       address: req.body.address,
@@ -58,7 +58,6 @@ export const createOrder = async (req, res) => {
       )}/auth/verify-payment/${paymentToken}`;
       order.linkPayment = linkPayment;
     } else if (req.body.payment_method === "Cod") {
-      order.dateReceived = Date.now();
       await updateWarehouseAfterPayment(order._id);
     }
 
@@ -176,8 +175,22 @@ export const deleteOrder = async (req, res) => {
 
 export const updateOrder = async (req, res) => {
   const idOrder = req.params.id;
+
   try {
-    const order = await Order.findByIdAndUpdate(
+    // Lấy thông tin đơn hàng hiện tại
+    const existingOrder = await Order.findById(idOrder);
+    if (!existingOrder) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found." });
+    }
+
+    if (req.body.idStaff) {
+      req.body.status = "Chờ lấy hàng";
+    }
+
+    // Cập nhật đơn hàng
+    const updatedOrder = await Order.findByIdAndUpdate(
       idOrder,
       {
         $set: req.body,
@@ -185,21 +198,16 @@ export const updateOrder = async (req, res) => {
       { new: true }
     );
 
-    if (!order) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Order not found." });
-    } else {
-      res.status(200).json({
-        success: true,
-        messgae: "Successfully updated.",
-        data: order,
-      });
-    }
+    res.status(200).json({
+      success: true,
+      message: "Successfully updated.",
+      data: updatedOrder,
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 // export const payment = async (req, res) => {
 //   const orderInfo = req.body;
