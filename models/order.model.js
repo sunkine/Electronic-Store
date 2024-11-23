@@ -1,8 +1,11 @@
-import { type } from "os";
 import mongoose from "../config/mongoose.js";
 
 const orderModel = new mongoose.Schema({
   idCustomer: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Account",
+  },
+  idStaff: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Account",
   },

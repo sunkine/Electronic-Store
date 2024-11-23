@@ -8,6 +8,18 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import mongoose from "../config/mongoose.js";
 
+export const createStaffAccount = async (req, res) => {
+    const newAccount = new Account(req.body);
+    try {
+      const saved = await newAccount.save();
+      res
+        .status(200)
+        .json({ success: true, messgae: "Successfully created.", data: saved });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 export const getAllAccount = async (req, res) => {
   const _id = req.userAuthId;
   const account = await Account.findById(_id);

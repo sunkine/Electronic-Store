@@ -175,7 +175,7 @@ export const verifyPayment = async (req, res) => {
 
     // Cập nhật trạng thái isPayment thành true
     order.isPayment = true;
-    order.status = "Chờ giao hàng"
+    order.status = "Chờ lấy hàng"
     order.linkPayment = null; // Xóa linkPayment sau khi thanh toán thành công
     await order.save();
 
