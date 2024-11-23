@@ -1,19 +1,26 @@
 import Staff from "../models/staff.model.js";
 
 export const createStaffInfo = async (req, res) => {
-    const userId = req.userAuthId;
-    try {
+  try {
     const newStaffInfo = new Staff({
-        idAccount: userId._id,  
-        name: req.body.name,
-        gender: req.body.gender,
-        phone: req.body.phone,
-        email: req.body.email,
-        address: req.body.address,
-        photo: req.body.photo || "",
-        idCompany: req.body.idCompany,
+      name: req.body.name,
+      gender: req.body.gender,
+      phone: req.body.phone,
+      email: req.body.email,
+      address: req.body.address,
+      photo: req.body.photo || "",
+      idCompany: req.body.idCompany,
     });
     const saved = await newStaffInfo.save();
+
+    if (!saved) {
+      return res
+        .status(401)
+        .json({
+          success: false,
+          message: "Fail to create new staff infomation",
+        });
+    }
     res
       .status(200)
       .json({ success: true, messgae: "Successfully created.", data: saved });
@@ -22,19 +29,22 @@ export const createStaffInfo = async (req, res) => {
   }
 };
 
-export const updateUser = async (req, res) => {
-  const {id} = req.params;
+export const updateStaff = async (req, res) => {
+  const { id } = req.params;
   try {
-    const user = await User.findById(id)
-    if (!user) {
+    const staff = await User.findById(id);
+    if (!staff) {
       return res.status(404).json({
         success: false,
-        message: "User not found.",
+        message: "Staff not found.",
       });
     }
-    
+
     if (req.body.phone) {
-      const existingUserWithPhone = await User.findOne({ phone: req.body.phone, _id: { $ne: user._id } });
+      const existingUserWithPhone = await Staff.findOne({
+        phone: req.body.phone,
+        _id: { $ne: user._id },
+      });
       if (existingUserWithPhone) {
         return res.status(400).json({
           success: false,
@@ -43,8 +53,8 @@ export const updateUser = async (req, res) => {
       }
     }
 
-    const idUserUpdated = await User.findByIdAndUpdate(
-      user._id,
+    const idUserUpdated = await Staff.findByIdAndUpdate(
+      staff._id,
       {
         $set: req.body,
       },
@@ -54,7 +64,7 @@ export const updateUser = async (req, res) => {
     if (!idUserUpdated) {
       return res
         .status(404)
-        .json({ success: false, message: "User not found." });
+        .json({ success: false, message: "Staff not found." });
     } else {
       res.status(200).json({
         success: true,
@@ -67,17 +77,17 @@ export const updateUser = async (req, res) => {
   }
 };
 
-export const deleteUser = async (req, res) => {
+export const deleteStaff = async (req, res) => {
   try {
     const id = req.params.id;
-    const user = await User.findByIdAndDelete(id);
-    if (!user) {
-      res.status(404).json({ success: false, message: "User not found." });
+    const staff = await Staff.findByIdAndDelete(id);
+    if (!staff) {
+      res.status(404).json({ success: false, message: "Staff not found." });
     } else {
       res.status(200).json({
         success: true,
-        messgae: "Successfully delete user.",
-        data: user,
+        messgae: "Successfully delete staff.",
+        data: staff,
       });
     }
   } catch (error) {
@@ -85,25 +95,25 @@ export const deleteUser = async (req, res) => {
   }
 };
 
-export const getAllUser = async (req, res) => {
+export const getAllStaff = async (req, res) => {
   try {
     const page = parseInt(req.query.page);
     const limit = parseInt(req.query.limit || 10);
-    let filters = {}
+    let filters = {};
 
-    const user = await User.find(filters)
+    const staff = await Staff.find(filters)
       .limit(limit)
       .skip(page * limit);
-    if (!user) {
+    if (!staff) {
       return res
         .status(404)
-        .json({ success: false, message: "User not found." });
+        .json({ success: false, message: "Staff not found." });
     } else {
       res.status(200).json({
         success: true,
-        messgae: "Successfully get all users.",
-        total: user.length,
-        data: user,
+        messgae: "Successfully get all staffs.",
+        total: staff.length,
+        data: staff,
       });
     }
   } catch (error) {
@@ -111,12 +121,12 @@ export const getAllUser = async (req, res) => {
   }
 };
 
-export const getOneUser = async (req, res) => {
-  const {id} = req.params;
+export const getOneStaff = async (req, res) => {
+  const { id } = req.params;
   try {
-    const user = await User.findById(id);
+    const staff = await Staff.findById(id);
 
-    if (!user) {
+    if (!staff) {
       return res
         .status(404)
         .json({ success: false, message: "User not found." });
@@ -125,7 +135,7 @@ export const getOneUser = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Successfully get user information.",
-      data: user,
+      data: staff,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

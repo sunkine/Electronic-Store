@@ -33,7 +33,7 @@ export const createOrder = async (req, res) => {
     // Tạo đơn hàng mới
     const order = new Order({
       idCustomer: _id,
-      idStaff: "",
+      idStaff: null,
       nameOfCustomer: req.body.nameOfCustomer,
       phone: req.body.phone,
       address: req.body.address,

@@ -5,7 +5,7 @@ import {
   getAllexpressCompany,
   getOneExpressCompany,
   updateExpressCompany,
-} from "../controllers/expressCompany.class";
+} from "../controllers/expressCompany.class.js";
 
 const router = express.Router();
 
