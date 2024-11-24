@@ -10,7 +10,7 @@ import mongoose from "../config/mongoose.js";
 import Staff from "../models/staff.model.js";
 
 export const createAccount = async (req, res) => {
-  const { email, role, idCompany, ...userData } = req.body;
+  const { username, email, role, password, idCompany, ...userData } = req.body;
 
   try {
     // Tạo tài khoản mới
