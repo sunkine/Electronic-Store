@@ -83,7 +83,7 @@ export const createOrder = async (req, res) => {
 
 export const getAllOrder = async (req, res) => {
   const page = parseInt(req.query.page);
-  const limit = parseInt(req.query.limit || 10);
+  const limit = parseInt(req.query.limit || 20);
 
   let filters = {};
 
