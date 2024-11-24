@@ -1,4 +1,5 @@
 import Staff from "../models/staff.model.js";
+import Order from "../models/order.model.js";
 
 export const createStaffInfo = async (req, res) => {
   try {
@@ -141,3 +142,27 @@ export const getOneStaff = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+export const getOrderByIdStaff = async (req, res) => {
+  const { id } = req.params;
+  try {
+    // Tìm các đơn hàng theo _id
+    const page = parseInt(req.query.page) || 0; // Default to page 0 if not specified
+    const orders = await Order.find({ idStaff: id })
+      .limit(page)
+      .skip(page * 10);
+
+    if (!orders || orders.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "No orders found" });
+    }
+
+    return res
+      .status(200)
+      .json({ success: true, total: orders.length, data: orders });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+}
