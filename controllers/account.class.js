@@ -14,7 +14,12 @@ export const createAccount = async (req, res) => {
 
   try {
     // Tạo tài khoản mới
-    const newAccount = new Account(req.body);
+    const newAccount = new Account({
+      username,
+      email,
+      password: bcrypt.hashSync(password, 10), // hash the password
+      isActive: true, // set account as verified
+      });
     const savedAccount = await newAccount.save();
 
     if (!savedAccount) {
