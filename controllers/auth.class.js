@@ -10,6 +10,7 @@ import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
 import Cart from "../models/cart.model.js";
 import Order from "../models/order.model.js";
+import Staff from "../models/staff.model.js";
 
 export const SignIn = async (req, res) => {
   try {
@@ -41,7 +42,12 @@ export const SignIn = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ email: req.body.email });
+    let user = null
+    if (account.role === "user") {
+      user = await User.findOne({ email: req.body.email });
+    } else if (account.role === "staff") {
+      user = await Staff.findOne({ email: req.body.email });
+    }
     const cart = await Cart.findOne({ idAccount: account._id });
 
     if (!user || !cart) {

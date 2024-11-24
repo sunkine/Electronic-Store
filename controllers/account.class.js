@@ -12,6 +12,7 @@ import Staff from "../models/staff.model.js";
 export const createAccount = async (req, res) => {
   const { username, password, email, role, idCompany, ...userData } = req.body;
 
+
   try {
     // Tạo tài khoản mới
     const newAccount = new Account({
