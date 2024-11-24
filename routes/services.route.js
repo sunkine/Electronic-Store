@@ -16,6 +16,7 @@ import {
 
 import { clearCart } from "../controllers/cart.class.js";
 import { isLoggedin } from "../middlewares/checkLogin.js";
+import { getOrderByIdStaff } from "../controllers/staff.class.js";
 
 const router = express.Router();
 
@@ -36,5 +37,6 @@ router.post("/clear", isLoggedin, clearCart);
 
 //get detail of order
 router.get("/order/:id", getOrderDetails);
+router.get("/staffOrder/:id", getOrderByIdStaff)
 
 export default router;
