@@ -37,6 +37,12 @@ export const createAccount = async (req, res) => {
         idCompany: idCompany || "",
       });
       await staff.save();
+
+      const cart = new Cart({
+        idAccount: savedAccount._id,
+        products: [],
+      });
+      await cart.save();
     } else if (role === "user") {
       // Tạo user
       const user = new User({
