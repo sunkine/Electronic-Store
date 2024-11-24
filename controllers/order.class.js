@@ -174,15 +174,15 @@ export const deleteOrder = async (req, res) => {
 };
 
 export const updateOrder = async (req, res) => {
-  const {idOrder} = req.params.id;
+  const {id} = req.params;
 
   try {
     // Lấy thông tin đơn hàng hiện tại
-    const existingOrder = await Order.findById(idOrder);
+    const existingOrder = await Order.findById(id);
     if (!existingOrder) {
       return res
         .status(404)
-        .json({ success: false, message: "Order not found." });
+        .json({ success: false, message: id });
     }
 
     if (req.body.idStaff) {
@@ -191,7 +191,7 @@ export const updateOrder = async (req, res) => {
 
     // Cập nhật đơn hàng
     const updatedOrder = await Order.findByIdAndUpdate(
-      idOrder,
+      id,
       {
         $set: req.body,
       },
