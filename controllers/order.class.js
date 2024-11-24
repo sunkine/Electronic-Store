@@ -6,6 +6,7 @@ import configPayment from "../config/configPayment.js";
 import moment from "moment";
 import qs from "qs";
 import jwt from "jsonwebtoken";
+import { updateWarehouseAfterPayment } from "./warehouse.class.js";
 
 // Controller tạo đơn hàng
 export const createOrder = async (req, res) => {
@@ -32,6 +33,7 @@ export const createOrder = async (req, res) => {
     // Tạo đơn hàng mới
     const order = new Order({
       idCustomer: _id,
+      idStaff: null,
       nameOfCustomer: req.body.nameOfCustomer,
       phone: req.body.phone,
       address: req.body.address,
@@ -43,7 +45,7 @@ export const createOrder = async (req, res) => {
       products: req.body.products,
       status: req.body.status || "Chờ xác nhận",
     });
-
+    await order.save();
     // Kiểm tra phương thức thanh toán
     if (req.body.payment_method === "Bank") {
       const paymentToken = jwt.sign(
@@ -55,8 +57,8 @@ export const createOrder = async (req, res) => {
         "host"
       )}/auth/verify-payment/${paymentToken}`;
       order.linkPayment = linkPayment;
-    } else if (req.body.payment_method === "Cash") {
-      order.dateReceived = Date.now();
+    } else if (req.body.payment_method === "Cod") {
+      await updateWarehouseAfterPayment(order._id);
     }
 
     // Lưu đơn hàng vào cơ sở dữ liệu
@@ -173,8 +175,22 @@ export const deleteOrder = async (req, res) => {
 
 export const updateOrder = async (req, res) => {
   const idOrder = req.params.id;
+
   try {
-    const order = await Order.findByIdAndUpdate(
+    // Lấy thông tin đơn hàng hiện tại
+    const existingOrder = await Order.findById(idOrder);
+    if (!existingOrder) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found." });
+    }
+
+    if (req.body.idStaff) {
+      req.body.status = "Chờ lấy hàng";
+    }
+
+    // Cập nhật đơn hàng
+    const updatedOrder = await Order.findByIdAndUpdate(
       idOrder,
       {
         $set: req.body,
@@ -182,72 +198,127 @@ export const updateOrder = async (req, res) => {
       { new: true }
     );
 
-    if (!order) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Order not found." });
-    } else {
-      res.status(200).json({
-        success: true,
-        messgae: "Successfully updated.",
-        data: order,
-      });
-    }
+    res.status(200).json({
+      success: true,
+      message: "Successfully updated.",
+      data: updatedOrder,
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
+
+// export const payment = async (req, res) => {
+//   const orderInfo = req.body;
+//   const embed_data = {
+//     redirecturl: "https://www.google.com/",
+//   };
+
+//   const items = [{}];
+//   const transID = Math.floor(Math.random() * 1000000);
+//   const order = {
+//     app_id: configPayment.app_id,
+//     app_trans_id: `${moment().format("YYMMDD")}_${transID}`, // translation missing: vi.docs.shared.sample_code.comments.app_trans_id
+//     app_user: orderInfo._id,
+//     app_time: Date.now(),
+//     phone: orderInfo.phone,
+//     address: orderInfo.address,
+//     item: JSON.stringify(items),
+//     embed_data: JSON.stringify(embed_data),
+//     amount: orderInfo.totalPrice,
+//     description: `Payment for the order #${transID}`,
+//     bank_code: "",
+//     callback_url:
+//       "https://448a-2402-800-63a3-ff6a-d1e5-499b-9ba9-fbbc.ngrok-free.app/services/callback",
+//   };
+
+//   // appid|app_trans_id|appuser|amount|apptime|embeddata|item
+//   const data =
+//     configPayment.app_id +
+//     "|" +
+//     order.app_trans_id +
+//     "|" +
+//     order.app_user +
+//     "|" +
+//     order.amount +
+//     "|" +
+//     order.app_time +
+//     "|" +
+//     order.embed_data +
+//     "|" +
+//     order.item;
+//   order.mac = CryptoJS.HmacSHA256(data, configPayment.key1).toString();
+
+//   try {
+//     const result = await axios.post(configPayment.endpoint, null, {
+//       params: order,
+//     });
+
+//     return res.status(200).json(result.data);
+//   } catch (error) {
+//     console.log(error);
+//   }
+// };
+
 export const payment = async (req, res) => {
-  const orderInfo = req.body;
-  const embed_data = {
-    redirecturl: "https://www.google.com/",
-  };
+  var ipAddr =
+    req.headers["x-forwarded-for"] ||
+    req.connection.remoteAddress ||
+    req.socket.remoteAddress ||
+    req.connection.socket.remoteAddress;
 
-  const items = [{}];
-  const transID = Math.floor(Math.random() * 1000000);
-  const order = {
-    app_id: configPayment.app_id,
-    app_trans_id: `${moment().format("YYMMDD")}_${transID}`, // translation missing: vi.docs.shared.sample_code.comments.app_trans_id
-    app_user: orderInfo._id,
-    app_time: Date.now(),
-    phone: orderInfo.phone,
-    address: orderInfo.address,
-    item: JSON.stringify(items),
-    embed_data: JSON.stringify(embed_data),
-    amount: orderInfo.totalPrice,
-    description: `Payment for the order #${transID}`,
-    bank_code: "",
-    callback_url:
-      "https://448a-2402-800-63a3-ff6a-d1e5-499b-9ba9-fbbc.ngrok-free.app/services/callback",
-  };
+  var config = require("config");
+  var dateFormat = require("dateformat");
 
-  // appid|app_trans_id|appuser|amount|apptime|embeddata|item
-  const data =
-    configPayment.app_id +
-    "|" +
-    order.app_trans_id +
-    "|" +
-    order.app_user +
-    "|" +
-    order.amount +
-    "|" +
-    order.app_time +
-    "|" +
-    order.embed_data +
-    "|" +
-    order.item;
-  order.mac = CryptoJS.HmacSHA256(data, configPayment.key1).toString();
+  var tmnCode = config.get("vnp_TmnCode");
+  var secretKey = config.get("vnp_HashSecret");
+  var vnpUrl = config.get("vnp_Url");
+  var returnUrl = config.get("vnp_ReturnUrl");
 
-  try {
-    const result = await axios.post(configPayment.endpoint, null, {
-      params: order,
-    });
+  var date = new Date();
 
-    return res.status(200).json(result.data);
-  } catch (error) {
-    console.log(error);
+  var createDate = dateFormat(date, "yyyymmddHHmmss");
+  var orderId = dateFormat(date, "HHmmss");
+  var amount = req.body.amount;
+  var bankCode = req.body.bankCode;
+
+  var orderInfo = req.body.orderDescription;
+  var orderType = req.body.orderType;
+  var locale = req.body.language;
+  if (locale === null || locale === "") {
+    locale = "vn";
   }
+  var currCode = "VND";
+  var vnp_Params = {};
+  vnp_Params["vnp_Version"] = "2.1.0";
+  vnp_Params["vnp_Command"] = "pay";
+  vnp_Params["vnp_TmnCode"] = tmnCode;
+  // vnp_Params['vnp_Merchant'] = ''
+  vnp_Params["vnp_Locale"] = locale;
+  vnp_Params["vnp_CurrCode"] = currCode;
+  vnp_Params["vnp_TxnRef"] = orderId;
+  vnp_Params["vnp_OrderInfo"] = orderInfo;
+  vnp_Params["vnp_OrderType"] = orderType;
+  vnp_Params["vnp_Amount"] = amount * 100;
+  vnp_Params["vnp_ReturnUrl"] = returnUrl;
+  vnp_Params["vnp_IpAddr"] = ipAddr;
+  vnp_Params["vnp_CreateDate"] = createDate;
+  if (bankCode !== null && bankCode !== "") {
+    vnp_Params["vnp_BankCode"] = bankCode;
+  }
+
+  vnp_Params = sortObject(vnp_Params);
+
+  var querystring = require("qs");
+  var signData = querystring.stringify(vnp_Params, { encode: false });
+  var crypto = require("crypto");
+  var hmac = crypto.createHmac("sha512", secretKey);
+  var signed = hmac.update(new Buffer(signData, "utf-8")).digest("hex");
+  vnp_Params["vnp_SecureHash"] = signed;
+  vnpUrl += "?" + querystring.stringify(vnp_Params, { encode: false });
+
+  res.json({ vnpUrl });
 };
 
 export const callback = async (req, res) => {

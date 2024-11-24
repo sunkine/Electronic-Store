@@ -4,7 +4,7 @@ import {
   generateAccessToken,
   generateRefreshToken,
 } from "../utils/createToken.js";
-import {updateWarehouseAfterPayment} from "./warehouse.class.js";
+import { updateWarehouseAfterPayment } from "./warehouse.class.js";
 import asyncHandler from "express-async-handler";
 import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
@@ -51,7 +51,12 @@ export const SignIn = async (req, res) => {
       });
     }
 
-    const { password: pwHash, resetPasswordToken, resetPasswordExpires, ...userDetails } = account._doc;
+    const {
+      password: pwHash,
+      resetPasswordToken,
+      resetPasswordExpires,
+      ...userDetails
+    } = account._doc;
 
     // Generate JWT tokens
     const accessToken = generateAccessToken(account._id);
@@ -119,12 +124,10 @@ export const verifyEmail = asyncHandler(async (req, res) => {
         .json({ success: false, message: "Invalid verification token" });
     }
 
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "An error occurred during verification.",
-      });
+    res.status(500).json({
+      success: false,
+      message: "An error occurred during verification.",
+    });
   }
 });
 
@@ -170,12 +173,14 @@ export const verifyPayment = async (req, res) => {
     // Tìm đơn hàng với idOrder
     const order = await Order.findById(idOrder);
     if (!order) {
-      return res.status(404).json({ success: false, message: "Order not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found" });
     }
 
     // Cập nhật trạng thái isPayment thành true
     order.isPayment = true;
-    order.status = "Chờ giao hàng"
+    order.status = "Chờ lấy hàng";
     order.linkPayment = null; // Xóa linkPayment sau khi thanh toán thành công
     await order.save();
 
@@ -187,7 +192,8 @@ export const verifyPayment = async (req, res) => {
     console.error(error);
     res.status(500).json({
       success: false,
-      message: error.name === "JsonWebTokenError" ? "Invalid token" : error.message,
+      message:
+        error.name === "JsonWebTokenError" ? "Invalid token" : error.message,
     });
   }
 };

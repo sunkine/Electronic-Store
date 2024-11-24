@@ -21,7 +21,7 @@ const isAdmin = async (req, res, next) => {
         message: "Access denied, admin only",
       });
     }
-  } catch (error) {
+  } catch (err) {
     if (err.name === "TokenExpiredError") {
       return res
         .status(401)

@@ -75,9 +75,15 @@ export const deleteProviderByID = async (req, res) => {
 // Lấy tất cả nhà cung cấp
 export const getAllProviders = async (req, res) => {
   const page = parseInt(req.query.page) || 0; // Mặc định trang 0 nếu không có tham số
+  const { name, idProvider } = req.query; // Lấy các tham số tìm kiếm từ query
+  let filters = {};
+
+  if (name) filters.nameOfProvider = { $regex: name, $options: "i" }; // Tìm kiếm theo tên nhà cung cấp
+  if (idProvider) filters.idProvider = { $regex: idProvider, $options: "i" }; // Tìm kiếm theo idProvider
+
   try {
     const providers = await Provider
-      .find({})
+      .find(filters)
       .limit(10) // Giới hạn số lượng nhà cung cấp trả về
       .skip(page * 10); // Bỏ qua số lượng nhà cung cấp tương ứng với trang
 
@@ -111,27 +117,5 @@ export const getProvider = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-// Tìm kiếm nhà cung cấp
-export const listProviderSearch = async (req, res) => {
-  const { name, idProvider } = req.query; // Lấy các tham số tìm kiếm từ query
-  let filters = {};
-
-  if (name) filters.nameOfProvider = { $regex: name, $options: "i" }; // Tìm kiếm theo tên nhà cung cấp
-  if (idProvider) filters.idProvider = { $regex: idProvider, $options: "i" }; // Tìm kiếm theo idProvider
-
-  try {
-    const providers = await Provider.find(filters); // Tìm các nhà cung cấp theo bộ lọc
-
-    res.status(200).json({
-      success: true,
-      message: "Tìm kiếm nhà cung cấp thành công.",
-      total: providers.length,
-      data: providers,
-    });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
   }
 };
