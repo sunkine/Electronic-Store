@@ -43,7 +43,7 @@ export const SignIn = async (req, res) => {
     }
 
     let user = null
-    if (account.role === "user") {
+    if (account.role === "user" || account.role === "admin") {
       user = await User.findOne({ email: req.body.email });
     } else if (account.role === "staff") {
       user = await Staff.findOne({ email: req.body.email });
