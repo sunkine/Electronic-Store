@@ -83,7 +83,7 @@ export const createOrder = async (req, res) => {
 
 export const getAllOrder = async (req, res) => {
   const page = parseInt(req.query.page);
-  const limit = parseInt(req.query.limit || 10);
+  const limit = parseInt(req.query.limit || 20);
 
   let filters = {};
 
@@ -174,7 +174,7 @@ export const deleteOrder = async (req, res) => {
 };
 
 export const updateOrder = async (req, res) => {
-  const idOrder = req.params.id;
+  const {idOrder} = req.params.id;
 
   try {
     // Lấy thông tin đơn hàng hiện tại
