@@ -174,7 +174,7 @@ export const deleteOrder = async (req, res) => {
 };
 
 export const updateOrder = async (req, res) => {
-  const idOrder = req.params.id;
+  const {idOrder} = req.params.id;
 
   try {
     // Lấy thông tin đơn hàng hiện tại

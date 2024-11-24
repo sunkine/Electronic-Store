@@ -7,7 +7,7 @@ const orderModel = new mongoose.Schema({
   },
   idStaff: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Account",
+    ref: "Staff",
   },
   nameOfCustomer: {
     type: String,
