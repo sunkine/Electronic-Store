@@ -1,6 +1,7 @@
 import Account from "../models/account.model.js";
 import User from "../models/user.model.js";
 import Cart from "../models/cart.model.js";
+import expressCompany from "../models/expressCompany.model.js";
 import asyncHandler from "express-async-handler";
 import { sendEmail, sendVerificationEmail } from "../utils/sendEmail.js";
 import { generateAccessToken } from "../utils/createToken.js";
@@ -17,9 +18,10 @@ export const createAccount = async (req, res) => {
     const newAccount = new Account({
       username,
       email,
-      password: bcrypt.hashSync(password, 10), // hash the password
+      password: bcrypt.hashSync(password, 10),
+      role, // hash the password
       isActive: true, // set account as verified
-      });
+    });
     const savedAccount = await newAccount.save();
 
     if (!savedAccount) {
@@ -154,6 +156,18 @@ export const updateAccount = async (req, res) => {
       updateData.password = hash;
     }
 
+    if (req.body.idCompany) {
+      const updatedCompany = await Staff.findOneAndUpdate(
+        {idAccount: id},
+        { idCompany: req.body.idCompany },
+        { new: true }
+      );
+      if (!updatedCompany) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Express company not found." });
+      }
+    }
     const existingEmail = await Account.findOne({ email: updateData.email });
     if (existingEmail) {
       return res
