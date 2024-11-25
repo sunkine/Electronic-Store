@@ -4,6 +4,7 @@ import {
   callback,
   checkStatusOrder,
   getOrderDetails,
+  createOrderBill,
 } from "../controllers/order.class.js";
 
 import {
@@ -32,13 +33,14 @@ router.post("/forgot-password", forgotPasswordCtrl);
 router.put("/reset-password/:token", resetPasswordCtrl);
 router.post("/resend-email-vertification", resendEmailVerification);
 router.post("/sign-up", SignUp);
-router.post("/sign-out", SignOut)
+router.post("/sign-out", isLoggedin, SignOut)
 
 //clear cart of account
 router.post("/clear", isLoggedin, clearCart);
 
 //get detail of order
-router.get("/order/:id", getOrderDetails);
-router.get("/staffOrder/:id", getOrderByIdStaff)
+router.get("/order/:id", isLoggedin, getOrderDetails);
+router.get("/staffOrder/:id", isLoggedin, getOrderByIdStaff)
+router.post("/order/:id", isLoggedin, createOrderBill)
 
 export default router;
