@@ -109,7 +109,7 @@ export const getAllOrder = async (req, res) => {
   }
 };
 
-export const getOrderById = async (req, res) => {
+export const getOrderByIdCustomer = async (req, res) => {
   const { id } = req.params;
   try {
     // Tìm các đơn hàng theo _id
@@ -132,6 +132,30 @@ export const getOrderById = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
+export const getOrderByIdStaff = async (req, res) => {
+  const { id } = req.params;
+  try {
+    // Tìm các đơn hàng theo _id
+    const page = parseInt(req.query.page) || 0; // Default to page 0 if not specified
+    const orders = await Order.find({ idStaff: id })
+      .limit(page)
+      .skip(page * 10);
+
+    if (!orders || orders.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "No orders found" });
+    }
+
+    return res
+      .status(200)
+      .json({ success: true, total: orders.length, data: orders });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+}
 
 export const getOrderDetails = async (req, res) => {
   try {
@@ -175,7 +199,7 @@ export const deleteOrder = async (req, res) => {
 };
 
 export const updateOrder = async (req, res) => {
-  const {id} = req.params;
+  const { id } = req.params;
 
   try {
     // Lấy thông tin đơn hàng hiện tại
@@ -187,7 +211,7 @@ export const updateOrder = async (req, res) => {
     }
 
     if (req.body.idStaff) {
-      req.body.status = "Chờ lấy hàng";
+      req.body.status = "Đang giao hàng";
     }
 
     // Cập nhật đơn hàng
@@ -209,66 +233,34 @@ export const updateOrder = async (req, res) => {
   }
 };
 
-export const createOrderBill = async (req, res) => {
+export const confirmOrder = async(req, res) => {
+  const { id } = req.params;
   try {
-    const { id } = req.params;
-
-    // Tìm đơn hàng theo ID
-    const order = await Order.findById(id).populate("products.idProduct");
-
-    if (!order) {
-      return res.status(404).json({ success: false, message: "Order not found" });
+    // Lấy thông tin đơn hàng hiện tại
+    const existingOrder = await Order.findById(id);
+    if (!existingOrder) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found." });
     }
-
-    // Tạo file PDF
-    const doc = new PDFDocument();
-
-    // Thiết lập response để tải về file PDF
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename=order_${id}.pdf`
+    const updatedOrder = await Order.findByIdAndUpdate(
+      id,
+      {
+        status : "Đã giao" 
+      },
+      { new: true }
     );
 
-    // Tạo nội dung PDF
-    doc.pipe(res);
-
-    // Header
-    doc.fontSize(18).text("Order Invoice", { align: "center" }).moveDown();
-
-    // Thông tin đơn hàng
-    doc
-      .fontSize(14)
-      .text(`Order ID: ${order._id}`)
-      .text(`Customer Name: ${order.nameOfCustomer}`)
-      .text(`Phone: ${order.phone}`)
-      .text(`Address: ${order.address}`)
-      .text(`Date Order: ${new Date(order.dateOrder).toLocaleDateString()}`)
-      .moveDown();
-
-    // Danh sách sản phẩm
-    doc.fontSize(16).text("Products:").moveDown();
-    order.products.forEach((product, index) => {
-      doc
-        .fontSize(12)
-        .text(
-          `${index + 1}. ${product.nameOfProduct} - ${product.quantity} x ${product.price} = ${
-            product.quantity * product.price
-          }`
-        );
+    res.status(200).json({
+      success: true,
+      message: "Successfully updated.",
+      data: updatedOrder,
     });
 
-    // Tổng tiền
-    doc.moveDown().fontSize(14).text(`Total Price: ${order.totalPrice} VND`);
-
-    // Kết thúc PDF
-    doc.end();
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: "Server error" });
+    res.status(500).json({ success: false, message: error.message });
   }
-};
-
+}
 
 export const payment = async (req, res) => {
   const orderInfo = req.body;

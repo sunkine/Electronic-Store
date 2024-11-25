@@ -7,7 +7,7 @@ import { generateAccessToken } from "../utils/createToken.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import mongoose from "../config/mongoose.js";
-import Staff from "../models/staff.model.js";
+
 
 export const createAccount = async (req, res) => {
   const { username, email, role, password, idCompany, ...userData } = req.body;
@@ -30,34 +30,33 @@ export const createAccount = async (req, res) => {
       });
     }
 
-    if (role === "staff") {
-      // Tạo staff
-      const staff = new Staff({
-        idAccount: savedAccount._id,
-        email: email,
-        idCompany: idCompany || "",
-      });
-      await staff.save();
+    // Tạo user
+    const user = new User({
+      idAccount: savedAccount._id,
+      email: email,
+      idCompany: idCompany || "",
+      ...userData,
+    });
+    const savedUser = await user.save();
 
-      const cart = new Cart({
-        idAccount: savedAccount._id,
-        products: [],
+    if (!savedUser) {
+      return res.status(401).json({
+        success: false,
+        message: "Failed to create user",
       });
-      await cart.save();
-    } else if (role === "user") {
-      // Tạo user
-      const user = new User({
-        idAccount: savedAccount._id,
-        email: email,
-        ...userData,
-      });
-      await user.save();
+    }
 
-      const cart = new Cart({
-        idAccount: savedAccount._id,
-        products: [],
+    const cart = new Cart({
+      idAccount: savedAccount._id,
+      products: [],
+    });
+
+    const savedCart = await cart.save();
+    if (!savedCart) {
+      return res.status(401).json({
+        success: false,
+        message: "Failed to create cart",
       });
-      await cart.save();
     }
 
     res.status(200).json({
@@ -119,27 +118,27 @@ export const deleteAccount = async (req, res) => {
     const account = await Account.findByIdAndDelete(id, { session });
     if (!account) {
       await session.abortTransaction();
-      return res.status(404).json({ success: false, message: "Account not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Account not found" });
     }
 
-    // Delete user or staff based on role
-    let user = null;
-    if (account.role === "user") {
-      user = await User.findOneAndDelete({ idAccount: id }, { session });
-    } else if (account.role === "staff") {
-      user = await Staff.findOneAndDelete({ idAccount: id }, { session });
-    }
+    const user = await User.findOneAndDelete({ idAccount: id }, { session });
 
     if (!user) {
       await session.abortTransaction();
-      return res.status(404).json({ success: false, message: `${req.body.role} not found` });
+      return res
+        .status(404)
+        .json({ success: false, message: `${req.body.role} not found` });
     }
 
     // Delete cart
     const cart = await Cart.findOneAndDelete({ idAccount: id }, { session });
     if (!cart) {
       await session.abortTransaction();
-      return res.status(404).json({ success: false, message: "Cart not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Cart not found" });
     }
 
     // Commit transaction
@@ -148,7 +147,7 @@ export const deleteAccount = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Successfully deleted account, user, and cart."
+      message: "Successfully deleted account, user, and cart.",
     });
   } catch (error) {
     // Rollback transaction in case of error
@@ -171,15 +170,15 @@ export const updateAccount = async (req, res) => {
     }
 
     if (req.body.idCompany) {
-      const updatedCompany = await Staff.findOneAndUpdate(
-        {idAccount: id},
+      const updatedCompany = await User.findOneAndUpdate(
+        { idAccount: id },
         { idCompany: req.body.idCompany },
         { new: true }
       );
       if (!updatedCompany) {
         return res
           .status(404)
-          .json({ success: false, message: "Staff not found." });
+          .json({ success: false, message: "User not found." });
       }
     }
 

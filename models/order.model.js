@@ -7,7 +7,7 @@ const orderModel = new mongoose.Schema({
   },
   idStaff: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Staff",
+    ref: "User",
   },
   nameOfCustomer: {
     type: String,
@@ -62,7 +62,6 @@ const orderModel = new mongoose.Schema({
     enum: [
       "Chờ xác nhận",
       "Chờ lấy hàng",
-      "Đang vận chuyển",
       "Đang giao",
       "Đã giao",
       "Đã hủy",

@@ -12,7 +12,6 @@ import ServicesRouter from "./services.route.js";
 import WarehouseRouter from "./warehouse.route.js";
 import ImportRoute from "./import.route.js";
 import UserRoute from "./user.route.js";
-import StaffRoute from "./staff.route.js"
 import AccountRoute from "./account.route.js";
 import ExpressCompanyRoute from "./expressCompany.route.js";
 
@@ -33,6 +32,5 @@ app.use("/import", ImportRoute);
 app.use("/user", UserRoute);
 app.use("/account", AccountRoute);
 app.use("/expressCompany", ExpressCompanyRoute);
-app.use("/staff", StaffRoute)
 
 export default app;
