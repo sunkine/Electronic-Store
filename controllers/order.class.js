@@ -1,3 +1,4 @@
+import PDFDocument from "pdfkit";
 import Order from "../models/order.model.js";
 import Cart from "../models/cart.model.js";
 import axios from "axios";
@@ -208,117 +209,117 @@ export const updateOrder = async (req, res) => {
   }
 };
 
+export const createOrderBill = async (req, res) => {
+  try {
+    const { id } = req.params;
 
-// export const payment = async (req, res) => {
-//   const orderInfo = req.body;
-//   const embed_data = {
-//     redirecturl: "https://www.google.com/",
-//   };
+    // Tìm đơn hàng theo ID
+    const order = await Order.findById(id).populate("products.idProduct");
 
-//   const items = [{}];
-//   const transID = Math.floor(Math.random() * 1000000);
-//   const order = {
-//     app_id: configPayment.app_id,
-//     app_trans_id: `${moment().format("YYMMDD")}_${transID}`, // translation missing: vi.docs.shared.sample_code.comments.app_trans_id
-//     app_user: orderInfo._id,
-//     app_time: Date.now(),
-//     phone: orderInfo.phone,
-//     address: orderInfo.address,
-//     item: JSON.stringify(items),
-//     embed_data: JSON.stringify(embed_data),
-//     amount: orderInfo.totalPrice,
-//     description: `Payment for the order #${transID}`,
-//     bank_code: "",
-//     callback_url:
-//       "https://448a-2402-800-63a3-ff6a-d1e5-499b-9ba9-fbbc.ngrok-free.app/services/callback",
-//   };
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Order not found" });
+    }
 
-//   // appid|app_trans_id|appuser|amount|apptime|embeddata|item
-//   const data =
-//     configPayment.app_id +
-//     "|" +
-//     order.app_trans_id +
-//     "|" +
-//     order.app_user +
-//     "|" +
-//     order.amount +
-//     "|" +
-//     order.app_time +
-//     "|" +
-//     order.embed_data +
-//     "|" +
-//     order.item;
-//   order.mac = CryptoJS.HmacSHA256(data, configPayment.key1).toString();
+    // Tạo file PDF
+    const doc = new PDFDocument();
 
-//   try {
-//     const result = await axios.post(configPayment.endpoint, null, {
-//       params: order,
-//     });
+    // Thiết lập response để tải về file PDF
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=order_${id}.pdf`
+    );
 
-//     return res.status(200).json(result.data);
-//   } catch (error) {
-//     console.log(error);
-//   }
-// };
+    // Tạo nội dung PDF
+    doc.pipe(res);
+
+    // Header
+    doc.fontSize(18).text("Order Invoice", { align: "center" }).moveDown();
+
+    // Thông tin đơn hàng
+    doc
+      .fontSize(14)
+      .text(`Order ID: ${order._id}`)
+      .text(`Customer Name: ${order.nameOfCustomer}`)
+      .text(`Phone: ${order.phone}`)
+      .text(`Address: ${order.address}`)
+      .text(`Date Order: ${new Date(order.dateOrder).toLocaleDateString()}`)
+      .moveDown();
+
+    // Danh sách sản phẩm
+    doc.fontSize(16).text("Products:").moveDown();
+    order.products.forEach((product, index) => {
+      doc
+        .fontSize(12)
+        .text(
+          `${index + 1}. ${product.nameOfProduct} - ${product.quantity} x ${product.price} = ${
+            product.quantity * product.price
+          }`
+        );
+    });
+
+    // Tổng tiền
+    doc.moveDown().fontSize(14).text(`Total Price: ${order.totalPrice} VND`);
+
+    // Kết thúc PDF
+    doc.end();
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
 
 export const payment = async (req, res) => {
-  var ipAddr =
-    req.headers["x-forwarded-for"] ||
-    req.connection.remoteAddress ||
-    req.socket.remoteAddress ||
-    req.connection.socket.remoteAddress;
+  const orderInfo = req.body;
+  const embed_data = {
+    redirecturl: "https://www.google.com/",
+  };
 
-  var config = require("config");
-  var dateFormat = require("dateformat");
+  const items = [{}];
+  const transID = Math.floor(Math.random() * 1000000);
+  const order = {
+    app_id: configPayment.app_id,
+    app_trans_id: `${moment().format("YYMMDD")}_${transID}`, // translation missing: vi.docs.shared.sample_code.comments.app_trans_id
+    app_user: orderInfo._id,
+    app_time: Date.now(),
+    phone: orderInfo.phone,
+    address: orderInfo.address,
+    item: JSON.stringify(items),
+    embed_data: JSON.stringify(embed_data),
+    amount: orderInfo.totalPrice,
+    description: `Payment for the order #${transID}`,
+    bank_code: "",
+    callback_url:
+      "https://448a-2402-800-63a3-ff6a-d1e5-499b-9ba9-fbbc.ngrok-free.app/services/callback",
+  };
 
-  var tmnCode = config.get("vnp_TmnCode");
-  var secretKey = config.get("vnp_HashSecret");
-  var vnpUrl = config.get("vnp_Url");
-  var returnUrl = config.get("vnp_ReturnUrl");
+  // appid|app_trans_id|appuser|amount|apptime|embeddata|item
+  const data =
+    configPayment.app_id +
+    "|" +
+    order.app_trans_id +
+    "|" +
+    order.app_user +
+    "|" +
+    order.amount +
+    "|" +
+    order.app_time +
+    "|" +
+    order.embed_data +
+    "|" +
+    order.item;
+  order.mac = CryptoJS.HmacSHA256(data, configPayment.key1).toString();
 
-  var date = new Date();
+  try {
+    const result = await axios.post(configPayment.endpoint, null, {
+      params: order,
+    });
 
-  var createDate = dateFormat(date, "yyyymmddHHmmss");
-  var orderId = dateFormat(date, "HHmmss");
-  var amount = req.body.amount;
-  var bankCode = req.body.bankCode;
-
-  var orderInfo = req.body.orderDescription;
-  var orderType = req.body.orderType;
-  var locale = req.body.language;
-  if (locale === null || locale === "") {
-    locale = "vn";
+    return res.status(200).json(result.data);
+  } catch (error) {
+    console.log(error);
   }
-  var currCode = "VND";
-  var vnp_Params = {};
-  vnp_Params["vnp_Version"] = "2.1.0";
-  vnp_Params["vnp_Command"] = "pay";
-  vnp_Params["vnp_TmnCode"] = tmnCode;
-  // vnp_Params['vnp_Merchant'] = ''
-  vnp_Params["vnp_Locale"] = locale;
-  vnp_Params["vnp_CurrCode"] = currCode;
-  vnp_Params["vnp_TxnRef"] = orderId;
-  vnp_Params["vnp_OrderInfo"] = orderInfo;
-  vnp_Params["vnp_OrderType"] = orderType;
-  vnp_Params["vnp_Amount"] = amount * 100;
-  vnp_Params["vnp_ReturnUrl"] = returnUrl;
-  vnp_Params["vnp_IpAddr"] = ipAddr;
-  vnp_Params["vnp_CreateDate"] = createDate;
-  if (bankCode !== null && bankCode !== "") {
-    vnp_Params["vnp_BankCode"] = bankCode;
-  }
-
-  vnp_Params = sortObject(vnp_Params);
-
-  var querystring = require("qs");
-  var signData = querystring.stringify(vnp_Params, { encode: false });
-  var crypto = require("crypto");
-  var hmac = crypto.createHmac("sha512", secretKey);
-  var signed = hmac.update(new Buffer(signData, "utf-8")).digest("hex");
-  vnp_Params["vnp_SecureHash"] = signed;
-  vnpUrl += "?" + querystring.stringify(vnp_Params, { encode: false });
-
-  res.json({ vnpUrl });
 };
 
 export const callback = async (req, res) => {
