@@ -26,6 +26,10 @@ const accountSchema = new mongoose.Schema(
     },
     resetPasswordToken: String,
     resetPasswordExpires: Date,
+    idCompany: { 
+      type: String, 
+      default: "",
+    },
   },
   { timestamps: true }
 );
