@@ -18,9 +18,10 @@ export const createAccount = async (req, res) => {
     const newAccount = new Account({
       username,
       email,
-      password: bcrypt.hashSync(password, 10), // hash the password
+      password: bcrypt.hashSync(password, 10),
+      role, // hash the password
       isActive: true, // set account as verified
-      });
+    });
     const savedAccount = await newAccount.save();
 
     if (!savedAccount) {
@@ -108,38 +109,53 @@ export const getAllAccount = async (req, res) => {
 };
 
 export const deleteAccount = async (req, res) => {
+  const session = await mongoose.startSession();
+
   try {
-    const id = req.params.id;
+    session.startTransaction();
 
-    // Start deleting the account, user, and cart in parallel to optimize performance
-    const deleteAccount = Account.findByIdAndDelete(id);
-    const deleteUser = User.findOneAndDelete({ idAccount: id });
-    const deleteCart = Cart.findOneAndDelete({ idAccount: id });
+    const { id } = req.params;
 
-    const [account, user, cart] = await Promise.all([
-      deleteAccount,
-      deleteUser,
-      deleteCart,
-    ]);
-
-    // Check if any of the deletions failed and return a response accordingly
-    if (!account || !user || !cart) {
-      return res.status(404).json({
-        success: false,
-        message: "One or more items (account, user, or cart) were not found.",
-      });
+    // Delete account
+    const account = await Account.findByIdAndDelete(id, { session });
+    if (!account) {
+      await session.abortTransaction();
+      return res.status(404).json({ success: false, message: "Account not found" });
     }
 
-    // All deletions were successful
+    // Delete user or staff based on role
+    let user = null;
+    if (account.role === "user") {
+      user = await User.findOneAndDelete({ idAccount: id }, { session });
+    } else if (account.role === "staff") {
+      user = await Staff.findOneAndDelete({ idAccount: id }, { session });
+    }
+
+    if (!user) {
+      await session.abortTransaction();
+      return res.status(404).json({ success: false, message: `${req.body.role} not found` });
+    }
+
+    // Delete cart
+    const cart = await Cart.findOneAndDelete({ idAccount: id }, { session });
+    if (!cart) {
+      await session.abortTransaction();
+      return res.status(404).json({ success: false, message: "Cart not found" });
+    }
+
+    // Commit transaction
+    await session.commitTransaction();
+    session.endSession();
+
     res.status(200).json({
       success: true,
-      message: "Successfully deleted account, user, and cart.",
-      dataAccount: account,
-      dataUser: user,
-      dataCart: cart,
+      message: "Successfully deleted account, user, and cart."
     });
   } catch (error) {
-    // Handle unexpected errors
+    // Rollback transaction in case of error
+    await session.abortTransaction();
+    session.endSession();
+
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -155,12 +171,19 @@ export const updateAccount = async (req, res) => {
       updateData.password = hash;
     }
 
-    const existingEmail = await Account.findOne({ email: updateData.email });
-    if (existingEmail) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Email is already registered. " });
+    if (req.body.idCompany) {
+      const updatedCompany = await Staff.findOneAndUpdate(
+        {idAccount: id},
+        { idCompany: req.body.idCompany },
+        { new: true }
+      );
+      if (!updatedCompany) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Staff not found." });
+      }
     }
+
     // Cập nhật tài khoản
     const updatedAccount = await Account.findByIdAndUpdate(
       id,
@@ -354,6 +377,26 @@ export const SignUp = asyncHandler(async (req, res) => {
     await session.abortTransaction();
     session.endSession();
     res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+export const SignOut = asyncHandler(async (req, res) => {
+  try {
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: true, // Đảm bảo chỉ hoạt động qua HTTPS
+      sameSite: "strict", // Bảo vệ chống tấn công CSRF
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Successfully logged out",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 });
 

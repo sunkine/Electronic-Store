@@ -11,7 +11,8 @@ import {
   resetPasswordCtrl,
   updatePassword,
   resendEmailVerification,
-  SignUp
+  SignUp,
+  SignOut
 } from "../controllers/account.class.js";
 
 import { clearCart } from "../controllers/cart.class.js";
@@ -31,6 +32,7 @@ router.post("/forgot-password", forgotPasswordCtrl);
 router.put("/reset-password/:token", resetPasswordCtrl);
 router.post("/resend-email-vertification", resendEmailVerification);
 router.post("/sign-up", SignUp);
+router.post("/sign-out", SignOut)
 
 //clear cart of account
 router.post("/clear", isLoggedin, clearCart);
