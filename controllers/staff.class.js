@@ -33,7 +33,7 @@ export const createStaffInfo = async (req, res) => {
 export const updateStaff = async (req, res) => {
   const { id } = req.params;
   try {
-    const staff = await Staff.findById(id);
+    const staff = await User.findById(id);
     if (!staff) {
       return res.status(404).json({
         success: false,

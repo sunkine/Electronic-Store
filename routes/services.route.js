@@ -18,7 +18,7 @@ import {
 
 import { clearCart } from "../controllers/cart.class.js";
 import { isLoggedin } from "../middlewares/checkLogin.js";
-import { getOrderByIdStaff } from "../controllers/staff.class.js";
+import { getOrderByIdStaff } from "../controllers/order.class.js";
 
 const router = express.Router();
 
