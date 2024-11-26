@@ -186,7 +186,7 @@ export const updateOrder = async (req, res) => {
     }
 
     if (req.body.idStaff) {
-      req.body.status = "Chờ lấy hàng";
+      req.body.status = "Đang giao";
     }
 
     // Cập nhật đơn hàng
