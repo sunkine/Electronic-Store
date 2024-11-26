@@ -33,7 +33,7 @@ export const createStaffInfo = async (req, res) => {
 export const updateStaff = async (req, res) => {
   const { id } = req.params;
   try {
-    const staff = await User.findById(id);
+    const staff = await Staff.findById(id);
     if (!staff) {
       return res.status(404).json({
         success: false,
@@ -44,7 +44,7 @@ export const updateStaff = async (req, res) => {
     if (req.body.phone) {
       const existingUserWithPhone = await Staff.findOne({
         phone: req.body.phone,
-        _id: { $ne: user._id },
+        _id: { $ne: staff._id },
       });
       if (existingUserWithPhone) {
         return res.status(400).json({

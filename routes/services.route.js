@@ -4,7 +4,7 @@ import {
   callback,
   checkStatusOrder,
   getOrderDetails,
-  createOrderBill,
+  confirmOrder,
 } from "../controllers/order.class.js";
 
 import {
@@ -41,6 +41,6 @@ router.post("/clear", isLoggedin, clearCart);
 //get detail of order
 router.get("/order/:id", isLoggedin, getOrderDetails);
 router.get("/staffOrder/:id", isLoggedin, getOrderByIdStaff)
-router.post("/order/:id", isLoggedin, createOrderBill)
+router.post("/order/:id", isLoggedin, confirmOrder)
 
-export default router;
+export default router; 
