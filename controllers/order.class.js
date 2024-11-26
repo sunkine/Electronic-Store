@@ -222,7 +222,8 @@ export const confirmOrder = async(req, res) => {
     const updatedOrder = await Order.findByIdAndUpdate(
       id,
       {
-        status : "Đã giao" 
+        status : "Đã giao",
+        dateReceived: Date.now(), 
       },
       { new: true }
     );

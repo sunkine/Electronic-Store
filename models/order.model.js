@@ -62,7 +62,6 @@ const orderModel = new mongoose.Schema({
     enum: [
       "Chờ xác nhận",
       "Chờ lấy hàng",
-      "Đang vận chuyển",
       "Đang giao",
       "Đã giao",
       "Đã hủy",
