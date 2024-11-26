@@ -4,7 +4,7 @@ import {
   callback,
   checkStatusOrder,
   getOrderDetails,
-  createOrderBill,
+  confirmOrder,
 } from "../controllers/order.class.js";
 
 import {
@@ -18,7 +18,7 @@ import {
 
 import { clearCart } from "../controllers/cart.class.js";
 import { isLoggedin } from "../middlewares/checkLogin.js";
-import { getOrderByIdStaff } from "../controllers/staff.class.js";
+import { getOrderByIdStaff } from "../controllers/order.class.js";
 
 const router = express.Router();
 
@@ -41,6 +41,6 @@ router.post("/clear", isLoggedin, clearCart);
 //get detail of order
 router.get("/order/:id", isLoggedin, getOrderDetails);
 router.get("/staffOrder/:id", isLoggedin, getOrderByIdStaff)
-router.post("/order/:id", isLoggedin, createOrderBill)
+router.post("/order/:id", isLoggedin, confirmOrder)
 
-export default router;
+export default router; 

@@ -44,7 +44,7 @@ export const updateStaff = async (req, res) => {
     if (req.body.phone) {
       const existingUserWithPhone = await Staff.findOne({
         phone: req.body.phone,
-        _id: { $ne: user._id },
+        _id: { $ne: staff._id },
       });
       if (existingUserWithPhone) {
         return res.status(400).json({
