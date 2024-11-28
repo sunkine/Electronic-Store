@@ -1,3 +1,4 @@
+
 import Order from "../models/order.model.js";
 import Cart from "../models/cart.model.js";
 import axios from "axios";
@@ -182,7 +183,7 @@ export const updateOrder = async (req, res) => {
     if (!existingOrder) {
       return res
         .status(404)
-        .json({ success: false, message: "Order not found." });
+        .json({ success: false, message: id });
     }
 
     if (req.body.idStaff) {
@@ -221,6 +222,7 @@ export const confirmOrder = async(req, res) => {
     const updatedOrder = await Order.findByIdAndUpdate(
       id,
       {
+        isPayment: true,
         status : "Đã giao",
         dateReceived: Date.now(), 
       },
