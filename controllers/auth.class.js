@@ -42,11 +42,11 @@ export const SignIn = async (req, res) => {
       });
     }
 
-    let user = null
-    if (account.role === "user" || account.role === "admin") {
-      user = await User.findOne({ email: req.body.email });
-    } else if (account.role === "staff") {
-      user = await Staff.findOne({ email: req.body.email });
+    let user;
+    if (account.role === "staff") {
+      user = await Staff.findOne({ idAccount: account._id });
+    } else {
+      user = await User.findOne({ idAccount: account._id });
     }
     const cart = await Cart.findOne({ idAccount: account._id });
 
